@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Lives We Didn't Live</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #11110f;
+    color: #f2eee6;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+button, input, select {
+    font-family: inherit;
+}
+
+.app {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+
+.screen {
+    width: 100%;
+    max-width: 760px;
+    min-height: 680px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 36px;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* ---------- LANDING ---------- */
+
+#landing {
+    text-align: center;
+    align-items: center;
+}
+
+.eyebrow {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .55;
+    margin-bottom: 35px;
+}
+
+.logo {
+    font-size: clamp(42px, 9vw, 78px);
+    line-height: .95;
+    font-weight: normal;
+    letter-spacing: -2px;
+    margin: 0;
+}
+
+.subtitle {
+    margin-top: 28px;
+    font-size: 18px;
+    font-style: italic;
+    opacity: .7;
+}
+
+.primary-btn {
+    margin-top: 55px;
+    background: #f2eee6;
+    color: #11110f;
+    border: none;
+    padding: 16px 42px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: .2s;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* ---------- GENERAL ---------- */
+
+.page-title {
+    font-size: 42px;
+    font-weight: normal;
+    margin: 0 0 12px;
+}
+
+.page-description {
+    opacity: .6;
+    font-style: italic;
+    margin-bottom: 38px;
+}
+
+.field {
+    margin-bottom: 24px;
+}
+
+.field label {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .55;
+    margin-bottom: 9px;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #55534e;
+    color: #f2eee6;
+    padding: 11px 2px;
+    font-size: 18px;
+    outline: none;
+}
+
+.field input:focus {
+    border-bottom-color: #f2eee6;
+}
+
+.field select option {
+    background: #11110f;
+}
+
+.photo-box {
+    border: 1px dashed #55534e;
+    padding: 25px;
+    text-align: center;
+    cursor: pointer;
+    opacity: .75;
+}
+
+.photo-box:hover {
+    border-color: #f2eee6;
+    opacity: 1;
+}
+
+.photo-preview {
+    max-width: 150px;
+    max-height: 150px;
+    margin-top: 15px;
+    border-radius: 2px;
+    display: none;
+}
+
+/* ---------- JOURNEY ---------- */
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.theme {
+    border: 1px solid #44423e;
+    background: transparent;
+    color: #f2eee6;
+    padding: 17px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.theme:hover,
+.theme.selected {
+    border-color: #f2eee6;
+    background: #22211e;
+}
+
+.theme .icon {
+    font-size: 21px;
+    margin-right: 7px;
+}
+
+.theme-name {
+    font-size: 16px;
+}
+
+.theme-desc {
+    display: block;
+    margin-top: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    opacity: .45;
+}
+
+.setting {
+    margin-top: 30px;
+}
+
+.setting-title {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .5;
+    margin-bottom: 12px;
+}
+
+.segment {
+    display: flex;
+    gap: 7px;
+}
+
+.segment button {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #44423e;
+    color: #f2eee6;
+    padding: 11px 5px;
+    cursor: pointer;
+}
+
+.segment button.selected {
+    background: #f2eee6;
+    color: #11110f;
+}
+
+/* ---------- WORLD ---------- */
+
+.world {
+    justify-content: flex-start;
+}
+
+.world-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    opacity: .5;
+    margin-bottom: 35px;
+}
+
+.world-image {
+    width: 100%;
+    height: 290px;
+    object-fit: cover;
+    margin-bottom: 30px;
+    filter: brightness(.8);
+}
+
+.scene-title {
+    font-size: 32px;
+    font-weight: normal;
+    margin-bottom: 15px;
+}
+
+.scene-text {
+    font-size: 18px;
+    line-height: 1.65;
+    opacity: .82;
+}
+
+.choice-area {
+    margin-top: 30px;
+}
+
+.choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 15px;
+    margin-bottom: 8px;
+    border: 1px solid #3d3b37;
+    background: transparent;
+    color: #f2eee6;
+    cursor: pointer;
+}
+
+.choice:hover {
+    background: #22211e;
+    border-color: #77736b;
+}
+
+.free-input {
+    width: 100%;
+    margin-top: 15px;
+    padding: 15px;
+    background: transparent;
+    border: 1px solid #44423e;
+    color: white;
+    font-size: 16px;
+}
+
+.tempo-bar {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #292824;
+    display: flex;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 1px;
+    opacity: .45;
+}
+
+/* ---------- ARCHIVE ---------- */
+
+.archive-card {
+    border: 1px solid #403e39;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.archive-title {
+    font-size: 27px;
+    margin-bottom: 8px;
+}
+
+.archive-meta {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 1px;
+    opacity: .45;
+    margin-bottom: 22px;
+}
+
+.memory {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.observer {
+    margin-top: 35px;
+    border-top: 1px solid #403e39;
+    padding-top: 25px;
+}
+
+.observer-title {
+    font-family: Arial, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 10px;
+    opacity: .5;
+}
+
+.observation {
+    font-size: 19px;
+    line-height: 1.6;
+    margin-top: 15px;
+    font-style: italic;
+}
+
+.footer-note {
+    margin-top: 35px;
+    text-align: center;
+    font-size: 12px;
+    opacity: .35;
+}
+
+@media (max-width: 600px) {
+    .screen {
+        padding: 35px 20px;
+        min-height: 100vh;
+    }
+
+    .page-title {
+        font-size: 34px;
+    }
+
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .world-image {
+        height: 230px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- ================= LANDING ================= -->
+
+<section id="landing" class="screen active">
+
+    <div class="eyebrow">A co-directed life experience</div>
+
+    <h1 class="logo">
+        THE LIVES<br>
+        WE DIDN'T LIVE
+    </h1>
+
+    <div class="subtitle">
+        Choose a life. See what happens.
+    </div>
+
+    <button class="primary-btn" onclick="showScreen('character')">
+        Start
+    </button>
+
+</section>
+
+
+<!-- ================= CHARACTER ================= -->
+
+<section id="character" class="screen">
+
+    <h2 class="page-title">Create Yourself</h2>
+
+    <div class="page-description">
+        Start with what is real.
+    </div>
+
+    <div class="field">
+        <label>Name</label>
+        <input id="name" type="text" placeholder="Your name">
+    </div>
+
+    <div class="field">
+        <label>Age</label>
+        <input id="age" type="number" placeholder="Your age">
+    </div>
+
+    <div class="field">
+        <label>Language(s)</label>
+        <input id="language" type="text" placeholder="English, 中文...">
+    </div>
+
+    <div class="field">
+        <label>Photo</label>
+
+        <div class="photo-box" onclick="document.getElementById('photo').click()">
+            Upload a photo
+            <input id="photo" type="file" accept="image/*" style="display:none"
+                   onchange="previewPhoto(event)">
+            <br>
+            <img id="photoPreview" class="photo-preview">
+        </div>
+    </div>
+
+    <button class="primary-btn" onclick="goToJourney()">
+        Continue
+    </button>
+
+</section>
+
+
+<!-- ================= JOURNEY SELECTION ================= -->
+
+<section id="journey" class="screen">
+
+    <h2 class="page-title">What kind of day do you want?</h2>
+
+    <div class="page-description">
+        Choose the feeling, not the outcome.
+    </div>
+
+    <div class="theme-grid">
+
+        <button class="theme" onclick="selectTheme(this, 'Thrilling')">
+            <span class="icon">⚡</span>
+            <span class="theme-name">Thrilling</span>
+            <span class="theme-desc">Unexpected turns</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Adventure')">
+            <span class="icon">🏃</span>
+            <span class="theme-name">Adventure</span>
+            <span class="theme-desc">Explore the unknown</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Romantic')">
+            <span class="icon">❤️</span>
+            <span class="theme-name">Romantic</span>
+            <span class="theme-desc">Connection & possibility</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Mystery')">
+            <span class="icon">🧩</span>
+            <span class="theme-name">Mystery</span>
+            <span class="theme-desc">Not everything is known</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Serendipity')">
+            <span class="icon">🌿</span>
+            <span class="theme-name">Serendipity</span>
+            <span class="theme-desc">Let the world surprise you</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Creative')">
+            <span class="icon">🎨</span>
+            <span class="theme-name">Creative</span>
+            <span class="theme-desc">Make something</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Reflective')">
+            <span class="icon">🪞</span>
+            <span class="theme-name">Reflective</span>
+            <span class="theme-desc">Look inward</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Chaotic')">
+            <span class="icon">😂</span>
+            <span class="theme-name">Chaotic</span>
+            <span class="theme-desc">Things don't go to plan</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Ordinary')">
+            <span class="icon">☕</span>
+            <span class="theme-name">Ordinary</span>
+            <span class="theme-desc">Just live the day</span>
+        </button>
+
+        <button class="theme" onclick="selectTheme(this, 'Surprise Me')">
+            <span class="icon">🎲</span>
+            <span class="theme-name">Surprise Me</span>
+            <span class="theme-desc">Leave it to the world</span>
+        </button>
+
+    </div>
+
+    <div class="setting">
+
+        <div class="setting-title">Intensity</div>
+
+        <div class="segment">
+            <button onclick="selectSetting(this)">Gentle</button>
+            <button class="selected" onclick="selectSetting(this)">Balanced</button>
+            <button onclick="selectSetting(this)">Intense</button>
+        </div>
+
+    </div>
+
+    <div class="setting">
+
+        <div class="setting-title">Tempo</div>
+
+        <div class="segment">
+            <button onclick="selectSetting(this)">Slow</button>
+            <button class="selected" onclick="selectSetting(this)">Normal</button>
+            <button onclick="selectSetting(this)">Fast</button>
+        </div>
+
+    </div>
+
+    <button class="primary-btn" onclick="enterBoston()">
+        Enter Boston
+    </button>
+
+    <div class="footer-note">
+        Your choice sets the tone. It does not determine the story.
+    </div>
+
+</section>
+
+
+<!-- ================= WORLD ================= -->
+
+<section id="world" class="screen world">
+
+    <div class="world-header">
+        <span>BOSTON</span>
+        <span>SATURDAY · 10:27 AM</span>
+    </div>
+
+    <div class="world-image" id="worldImage"
+         style="background:
+         linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.35)),
+         url('https://images.unsplash.com/photo-1504274066651-8d31a536b11a?auto=format&fit=crop&w=1200&q=80')
+         center/cover;">
+    </div>
+
+    <h2 class="scene-title">The Saturday Morning</h2>
+
+    <div class="scene-text" id="sceneText">
+
+        You have no plans today.
+
+        <br><br>
+
+        Boston is already awake.
+
+        You walk outside without deciding where you're going.
+
+        A few blocks away, you notice a small community market
+        beginning to fill the street.
+
+        Nothing about it seems particularly important.
+
+        You could keep walking.
+
+        Or you could find out what's there.
+
+    </div>
+
+    <div class="choice-area" id="choices">
+
+        <button class="choice" onclick="nextScene('market')">
+            A. Go inside and look around.
+        </button>
+
+        <button class="choice" onclick="nextScene('coffee')">
+            B. Get a coffee first.
+        </button>
+
+        <button class="choice" onclick="nextScene('walk')">
+            C. Keep walking.
+        </button>
+
+        <button class="choice" onclick="nextScene('random')">
+            D. Choose a direction without thinking.
+        </button>
+
+        <input class="free-input"
+               id="freeAction"
+               placeholder="Or tell the world what you want to do...">
+
+        <button class="choice" onclick="freeAction()">
+            → Continue
+        </button>
+
+    </div>
+
+    <div class="tempo-bar">
+        <span>STORY TEMPO</span>
+        <span>Slow · Normal · Fast</span>
+    </div>
+
+    <button class="primary-btn" onclick="finishJourney()">
+        End Journey
+    </button>
+
+</section>
+
+
+<!-- ================= ARCHIVE ================= -->
+
+<section id="archive" class="screen">
+
+    <div class="eyebrow">Archive</div>
+
+    <h2 class="page-title">A Life That Never Happened</h2>
+
+    <div class="archive-card">
+
+        <div class="archive-title">
+            Journey 001 — The Saturday Morning
+        </div>
+
+        <div class="archive-meta">
+            BOSTON · SATURDAY · SEPTEMBER
+        </div>
+
+        <div>
+            You began the day without a plan.
+
+            The city was already moving around you.
+
+            You chose to enter a small community market
+            instead of continuing down the street.
+        </div>
+
+        <div class="observer">
+
+            <div class="observer-title">
+                What I noticed about you
+            </div>
+
+            <div class="observation" id="observation">
+                You seem to be someone who is willing to
+                follow curiosity when the cost of doing so is small.
+            </div>
+
+        </div>
+
+    </div>
+
+    <button class="primary-btn" onclick="showScreen('landing')">
+        Begin Another Life
+    </button>
+
+    <div class="footer-note">
+        You can imagine another life. You cannot rewrite the one before it.
+    </div>
+
+</section>
+
+</div>
+
+
+<script>
+
+let selectedTheme = null;
+let playerName = "";
+
+function showScreen(id) {
+
+    document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+
+    window.scrollTo(0,0);
+}
+
+function previewPhoto(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        const img = document.getElementById("photoPreview");
+
+        img.src = e.target.result;
+        img.style.display = "inline-block";
+
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function goToJourney() {
+
+    playerName = document.getElementById("name").value || "You";
+
+    showScreen("journey");
+}
+
+function selectTheme(button, theme) {
+
+    document.querySelectorAll(".theme").forEach(btn => {
+        btn.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+
+    selectedTheme = theme;
+}
+
+function selectSetting(button) {
+
+    const group = button.parentElement;
+
+    group.querySelectorAll("button").forEach(btn => {
+        btn.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+}
+
+function enterBoston() {
+
+    showScreen("world");
+
+}
+
+function nextScene(choice) {
+
+    const text = document.getElementById("sceneText");
+    const choices = document.getElementById("choices");
+
+    if (choice === "market") {
+
+        text.innerHTML = `
+            You step into the market.
+
+            <br><br>
+
+            There are books, plants, handmade objects and
+            small prints spread across several tables.
+
+            <br><br>
+
+            You don't know anyone here.
+
+            For now, nothing is asking anything from you.
+        `;
+
+    }
+
+    else if (choice === "coffee") {
+
+        text.innerHTML = `
+            You decide coffee comes first.
+
+            <br><br>
+
+            A small café is just around the corner.
+
+            The line is longer than you expected.
+
+            <br><br>
+
+            You have time.
+
+            You could wait.
+
+            Or you could change your mind.
+        `;
+
+    }
+
+    else if (choice === "walk") {
+
+        text.innerHTML = `
+            You keep walking.
+
+            <br><br>
+
+            The market disappears behind you.
+
+            A street you've never really noticed before
+            opens up ahead.
+
+            <br><br>
+
+            You hear music somewhere nearby.
+        `;
+
+    }
+
+    else if (choice === "random") {
+
+        text.innerHTML = `
+            You turn left without checking where the street goes.
+
+            <br><br>
+
+            For the next few minutes, you simply walk.
+
+            <br><br>
+
+            You don't know yet whether this decision
+            will matter.
+        `;
+
+    }
+
+    choices.innerHTML = `
+        <button class="choice" onclick="continueWorld()">
+            Continue.
+        </button>
+
+        <input class="free-input"
+               id="freeAction"
+               placeholder="Or tell the world what you want to do...">
+
+        <button class="choice" onclick="freeAction()">
+            → Continue
+        </button>
+    `;
+}
+
+function continueWorld() {
+
+    document.getElementById("sceneText").innerHTML += `
+
+        <br><br>
+
+        The city continues around you.
+
+        <br><br>
+
+        <em>Something may happen. Or nothing may happen.</em>
+    `;
+
+}
+
+function freeAction() {
+
+    const input = document.getElementById("freeAction");
+
+    if (!input || !input.value.trim()) return;
+
+    document.getElementById("sceneText").innerHTML += `
+
+        <br><br>
+
+        <strong>${playerName}</strong> decides:
+
+        “${input.value}”
+
+        <br><br>
+
+        The world takes note.
+    `;
+
+    input.value = "";
+
+}
+
+function finishJourney() {
+
+    showScreen("archive");
+
+}
+
+</script>
+
+</body>
+</html>
