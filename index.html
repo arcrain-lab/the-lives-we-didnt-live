@@ -860,12 +860,16 @@ function enterBoston() {
     const tempo =
         getSetting("Tempo") || "Normal";
 
+
+    // -----------------------------------------
+    // INITIAL WORLD STATE
+    // -----------------------------------------
+
     worldState = {
 
         time: "Saturday, 10:27 AM",
 
-        location:
-            "Boston — an ordinary Saturday morning",
+        location: "Boston",
 
         people: [],
 
@@ -880,75 +884,146 @@ function enterBoston() {
         },
 
         journey: {
-            theme,
-            intensity,
-            tempo
+            theme: theme,
+            intensity: intensity,
+            tempo: tempo
         }
     };
 
+
+    // Clear previous journey
     journeyHistory = [];
 
-    document.getElementById("sceneText").innerHTML = `
-        You have no plans today.
 
-        <br><br>
+    // -----------------------------------------
+    // INITIAL SCENE
+    // -----------------------------------------
 
-        Boston is already awake.
+    const sceneTitle =
+        document.getElementById("sceneTitle");
 
-        <br><br>
+    const sceneText =
+        document.getElementById("sceneText");
 
-        You walk outside without deciding
-        where you're going.
+    const choices =
+        document.getElementById("choices");
 
-        <br><br>
 
-        A few blocks away, you notice a small
-        community market beginning to fill the street.
+    if (sceneTitle) {
 
-        <br><br>
+        sceneTitle.textContent =
+            "The Saturday Morning";
 
-        Nothing about it seems particularly important.
+    }
 
-        <br><br>
 
-        You could keep walking.
+    if (sceneText) {
 
-        Or you could find out what's there.
-    `;
+        sceneText.innerHTML = `
 
-    document.getElementById("choices").innerHTML = `
+            <div class="world-scene">
 
-        <button class="choice"
-                onclick="sendAction('Go inside the community market and look around.')">
-            A. Go inside and look around.
-        </button>
+                <div class="world-label">
+                    ENVIRONMENT
+                </div>
 
-        <button class="choice"
-                onclick="sendAction('Get a coffee first.')">
-            B. Get a coffee first.
-        </button>
+                <div class="world-environment">
 
-        <button class="choice"
-                onclick="sendAction('Keep walking.')">
-            C. Keep walking.
-        </button>
+                    Boston is already awake.
 
-        <button class="choice"
-                onclick="sendAction('Choose a direction without thinking.')">
-            D. Choose a direction without thinking.
-        </button>
+                    A small community market
+                    is beginning to fill the street.
 
-        <input
-            class="free-input"
-            id="freeAction"
-            placeholder="Or tell the world what you want to do..."
-        >
+                </div>
 
-        <button class="choice"
-                onclick="freeAction()">
-            → Do it
-        </button>
-    `;
+
+                <div class="world-divider"></div>
+
+
+                <div class="world-label">
+                    SOMETHING CHANGED
+                </div>
+
+                <div class="world-event">
+
+                    Nothing seems particularly important
+                    yet.
+
+                    You simply have a free Saturday
+                    morning ahead of you.
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    // -----------------------------------------
+    // INITIAL CHOICES
+    // -----------------------------------------
+
+    if (choices) {
+
+        window.currentWorldChoices = [
+
+            "Go inside the community market and look around.",
+
+            "Get a coffee first.",
+
+            "Keep walking.",
+
+            "Choose a direction without thinking."
+
+        ];
+
+
+        let html = "";
+
+
+        window.currentWorldChoices.forEach(
+            (choice, index) => {
+
+                html += `
+
+                    <button
+                        class="choice"
+                        onclick="handleChoice(${index})"
+                    >
+
+                        ${String.fromCharCode(65 + index)}.
+                        ${escapeHtml(choice)}
+
+                    </button>
+
+                `;
+
+            }
+        );
+
+
+        html += `
+
+            <input
+                class="free-input"
+                id="freeAction"
+                placeholder="Or tell the world what you want to do..."
+            >
+
+            <button
+                class="choice"
+                onclick="freeAction()"
+            >
+                → Do it
+            </button>
+
+        `;
+
+
+        choices.innerHTML = html;
+    }
+
 
     showScreen("world");
 }
@@ -968,36 +1043,47 @@ async function sendAction(action) {
     const choices =
         document.getElementById("choices");
 
+
     // -----------------------------------------
     // Record player's action
     // -----------------------------------------
 
     journeyHistory.push({
+
         type: "player",
+
         action: action,
+
         time: worldState.time,
+
         location: worldState.location
+
     });
+
 
     // -----------------------------------------
     // Loading state
     // -----------------------------------------
 
     sceneText.innerHTML = `
-        <em>The world is responding...</em>
+
+        <div class="world-scene">
+
+            <div class="world-label">
+                WORLD ENGINE
+            </div>
+
+            <div class="world-environment">
+                The world is responding...
+            </div>
+
+        </div>
+
     `;
 
-    choices.innerHTML = `
-        <div style="
-            opacity:.45;
-            font-family:Arial,sans-serif;
-            font-size:11px;
-            letter-spacing:1px;
-            text-transform:uppercase;
-        ">
-            World Engine
-        </div>
-    `;
+
+    choices.innerHTML = "";
+
 
     // -----------------------------------------
     // Send CURRENT WORLD + HISTORY to AI
@@ -1011,7 +1097,6 @@ async function sendAction(action) {
 
             ...worldState,
 
-            // Give the AI memory of what just happened
             journeyHistory:
                 journeyHistory.slice(-12)
 
@@ -1019,32 +1104,56 @@ async function sendAction(action) {
 
     };
 
+
+    // -----------------------------------------
+    // Ask World Engine
+    // -----------------------------------------
+
     try {
 
         const response = await fetch(
+
             WORLD_ENGINE_URL,
+
             {
+
                 method: "POST",
 
                 headers: {
-                    "Content-Type": "application/json"
+
+                    "Content-Type":
+                        "application/json"
+
                 },
 
-                body: JSON.stringify(requestBody)
+                body:
+                    JSON.stringify(requestBody)
+
             }
+
         );
+
 
         const data =
             await response.json();
 
+
+        // -----------------------------------------
+        // Error handling
+        // -----------------------------------------
+
         if (!response.ok || !data.ok) {
 
             throw new Error(
+
                 data.error
                     ? JSON.stringify(data.error)
                     : "World Engine request failed."
+
             );
+
         }
+
 
         // -----------------------------------------
         // Update world state
@@ -1053,11 +1162,15 @@ async function sendAction(action) {
         if (data.worldState) {
 
             worldState = {
+
                 ...worldState,
+
                 ...data.worldState
+
             };
 
         }
+
 
         // -----------------------------------------
         // Record AI response
@@ -1067,81 +1180,143 @@ async function sendAction(action) {
 
             type: "world",
 
-            scene:
-                data.scene ||
-                data.sceneText ||
-                "",
+            sceneTitle:
+                data.sceneTitle || "",
+
+            time:
+                data.time ||
+                worldState.time,
+
+            location:
+                data.location ||
+                worldState.location,
+
+            environment:
+                data.environment || "",
+
+            event:
+                data.event || "",
+
+            people:
+                Array.isArray(data.people)
+                    ? data.people
+                    : [],
+
+            dialogue:
+                data.dialogue || {
+                    speaker: "",
+                    text: ""
+                },
 
             choices:
                 Array.isArray(data.choices)
                     ? data.choices
                     : [],
 
-            time:
-                worldState.time,
+            shouldGenerateImage:
+                data.shouldGenerateImage || false,
 
-            location:
-                worldState.location,
-
-            importantPeople:
-                data.importantPeople || [],
+            imageType:
+                data.imageType || "none",
 
             memoryMoment:
                 data.memoryMoment || false
+
         });
 
+
+        // -----------------------------------------
+        // Render new world
+        // -----------------------------------------
+
         renderWorldResponse(data);
+
 
     } catch (error) {
 
         console.error(error);
 
+
         sceneText.innerHTML = `
-            <strong>The world went quiet for a moment.</strong>
 
-            <br><br>
+            <div class="world-scene">
 
-            Something prevented the World Engine
-            from responding.
+                <div class="world-label">
+                    WORLD ENGINE
+                </div>
 
-            <br><br>
+                <div class="world-event">
 
-            <small>${escapeHtml(error.message)}</small>
+                    <strong>
+                        The world went quiet
+                        for a moment.
+                    </strong>
+
+                    <br><br>
+
+                    Something prevented the
+                    World Engine from responding.
+
+                    <br><br>
+
+                    <small>
+                        ${escapeHtml(
+                            error.message
+                        )}
+                    </small>
+
+                </div>
+
+            </div>
+
         `;
+
 
         choices.innerHTML = `
 
             <button
                 class="choice"
-                onclick="sendAction(${JSON.stringify(action)})">
+                onclick="sendAction(${JSON.stringify(action)})"
+            >
 
                 Try again.
 
             </button>
 
+
             <button
                 class="choice"
-                onclick="enterBoston()">
+                onclick="enterBoston()"
+            >
 
                 Return to the beginning.
 
             </button>
 
         `;
+
     }
+
 }
-
-
+    
 // =====================================================
 // RENDER AI RESPONSE
 // =====================================================
 
 function renderWorldResponse(data) {
-    
+
+    // -----------------------------------------
+    // Store current choices
+    // -----------------------------------------
+
     window.currentWorldChoices =
         Array.isArray(data.choices)
             ? data.choices
             : [];
+
+
+    const sceneTitle =
+        document.getElementById("sceneTitle");
 
     const sceneText =
         document.getElementById("sceneText");
@@ -1149,118 +1324,398 @@ function renderWorldResponse(data) {
     const choices =
         document.getElementById("choices");
 
-    // -----------------------------------------
-    // AI can return "scene"
-    // -----------------------------------------
-
-    const text =
-        data.scene ||
-        data.sceneText ||
-        "";
 
     // -----------------------------------------
-    // Display scene
+    // UPDATE WORLD STATE
     // -----------------------------------------
 
-    sceneText.innerHTML =
-        formatSceneText(text);
+    if (data.time) {
+
+        worldState.time = data.time;
+
+    }
+
+    if (data.location) {
+
+        worldState.location = data.location;
+
+    }
+
 
     // -----------------------------------------
-    // Update world header if AI provides time
+    // SCENE TITLE
+    // -----------------------------------------
+
+    if (sceneTitle) {
+
+        sceneTitle.textContent =
+            data.sceneTitle ||
+            "The Next Moment";
+
+    }
+
+
+    // -----------------------------------------
+    // WORLD HEADER
     // -----------------------------------------
 
     const worldHeader =
         document.querySelector(".world-header");
 
-    if (
-        worldHeader &&
-        worldState.time
-    ) {
+
+    if (worldHeader) {
+
+        const time =
+            data.time ||
+            worldState.time ||
+            "";
+
+        const location =
+            data.location ||
+            worldState.location ||
+            "Boston";
+
 
         worldHeader.innerHTML = `
 
-            <span>BOSTON</span>
+            <span>
+                ${escapeHtml(
+                    String(location)
+                )}
+            </span>
 
             <span>
-                ${escapeHtml(String(worldState.time))}
+                ${escapeHtml(
+                    String(time)
+                )}
             </span>
 
         `;
 
     }
 
+
     // -----------------------------------------
-    // Build choices
+    // BUILD STRUCTURED SCENE
     // -----------------------------------------
 
-    let html = "";
+    let sceneHTML = "";
 
-  if (Array.isArray(data.choices)) {
 
-    data.choices.forEach(
-        (choice, index) => {
+    // -----------------------------------------
+    // ENVIRONMENT
+    // -----------------------------------------
 
-            html += `
+    if (
+        data.environment &&
+        String(data.environment).trim()
+    ) {
 
-                <button
-                    class="choice"
-                    onclick="handleChoice(${index})"
-                >
-                    ${String.fromCharCode(65 + index)}.
-                    ${escapeHtml(choice)}
-                </button>
+        sceneHTML += `
+
+            <div class="world-scene">
+
+                <div class="world-label">
+                    ENVIRONMENT
+                </div>
+
+                <div class="world-environment">
+
+                    ${escapeHtml(
+                        String(
+                            data.environment
+                        )
+                    )}
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // -----------------------------------------
+    // SOMETHING CHANGED
+    // -----------------------------------------
+
+    if (
+        data.event &&
+        String(data.event).trim()
+    ) {
+
+        sceneHTML += `
+
+            <div class="world-scene">
+
+                <div class="world-label">
+                    SOMETHING CHANGED
+                </div>
+
+                <div class="world-event">
+
+                    ${escapeHtml(
+                        String(
+                            data.event
+                        )
+                    )}
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // -----------------------------------------
+    // PEOPLE
+    // -----------------------------------------
+
+    if (
+        Array.isArray(data.people) &&
+        data.people.length > 0
+    ) {
+
+        data.people.forEach(person => {
+
+            if (!person) return;
+
+
+            const name =
+                person.name || "";
+
+
+            const description =
+                person.description || "";
+
+
+            const dialogue =
+                person.dialogue || "";
+
+
+            sceneHTML += `
+
+                <div class="world-scene world-person">
+
+                    ${
+                        name
+                            ? `
+                                <div
+                                    class="world-person-name"
+                                >
+                                    ${escapeHtml(
+                                        String(name)
+                                    )}
+                                </div>
+                              `
+                            : ""
+                    }
+
+
+                    ${
+                        description
+                            ? `
+                                <div
+                                    class="world-person-description"
+                                >
+                                    ${escapeHtml(
+                                        String(
+                                            description
+                                        )
+                                    )}
+                                </div>
+                              `
+                            : ""
+                    }
+
+
+                    ${
+                        dialogue
+                            ? `
+                                <div
+                                    class="world-dialogue"
+                                >
+                                    “${escapeHtml(
+                                        String(
+                                            dialogue
+                                        )
+                                    )}”
+                                </div>
+                              `
+                            : ""
+                    }
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+
+    // -----------------------------------------
+    // GENERAL DIALOGUE
+    // -----------------------------------------
+
+    if (
+        data.dialogue &&
+        data.dialogue.text &&
+        String(
+            data.dialogue.text
+        ).trim()
+    ) {
+
+        const speaker =
+            data.dialogue.speaker || "";
+
+
+        // Avoid displaying duplicate dialogue
+        // when the same dialogue already appeared
+        // inside a person block.
+
+        const alreadyShown =
+            Array.isArray(data.people) &&
+            data.people.some(person =>
+                person &&
+                person.dialogue &&
+                person.dialogue ===
+                    data.dialogue.text
+            );
+
+
+        if (!alreadyShown) {
+
+            sceneHTML += `
+
+                <div class="world-scene">
+
+                    ${
+                        speaker
+                            ? `
+                                <div
+                                    class="world-person-name"
+                                >
+                                    ${escapeHtml(
+                                        String(speaker)
+                                    )}
+                                </div>
+                              `
+                            : ""
+                    }
+
+
+                    <div
+                        class="world-dialogue"
+                    >
+
+                        “${escapeHtml(
+                            String(
+                                data.dialogue.text
+                            )
+                        )}”
+
+                    </div>
+
+                </div>
 
             `;
 
         }
-    );
-}
 
-    
+    }
+
+
     // -----------------------------------------
-    // Free-form action
+    // FALLBACK
     // -----------------------------------------
 
-    html += `
+    if (!sceneHTML.trim()) {
 
-        <input
-            class="free-input"
-            id="freeAction"
-            placeholder="Or tell the world what you want to do..."
-        >
-
-        <button
-            class="choice"
-            onclick="freeAction()">
-
-            → Do it
-
-        </button>
+        const fallback =
+            data.scene ||
+            data.sceneText ||
+            "The world continues around you.";
 
 
-        <button
-            class="choice"
-            onclick="sendAction(
-                'I stay here for a while and simply observe what happens.'
-            )">
+        sceneHTML = `
 
-            Stay and observe.
+            <div class="world-scene">
 
-        </button>
+                <div class="world-environment">
+
+                    ${formatSceneText(
+                        fallback
+                    )}
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
 
 
-        <button
-            class="choice"
-            onclick="finishJourney()">
+    // -----------------------------------------
+    // RENDER SCENE
+    // -----------------------------------------
 
-            End this journey.
+    sceneText.innerHTML =
+        sceneHTML;
 
-        </button>
 
-    `;
+    // -----------------------------------------
+    // BUILD CHOICES
+    // -----------------------------------------
 
-    choices.innerHTML = html;
-}
+    let html = "";
+
+
+    if (
+        Array.isArray(data.choices) &&
+        data.choices.length > 0
+    ) {
+
+        html += `
+
+            <div class="world-label choice-label">
+                WHAT DO YOU DO?
+            </div>
+
+        `;
+
+
+        data.choices.forEach(
+            (choice, index) => {
+
+                html += `
+
+                    <button
+                        class="choice"
+                        onclick="handleChoice(${index})"
+                    >
+
+                        ${String.fromCharCode(
+                            65 + index
+                        )}.
+
+                        ${escapeHtml(
+                            String(choice)
+                        )}
+
+                    </button>
+
+                `;
+
+            }
+        );
+
+    }
+
 
 function handleChoice(index) {
 
