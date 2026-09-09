@@ -772,10 +772,14 @@ function enterBoston() {
 
 }
 
+let sceneStep = 0;
+
 function nextScene(choice) {
 
     const text = document.getElementById("sceneText");
     const choices = document.getElementById("choices");
+
+    sceneStep = 1;
 
     if (choice === "market") {
 
@@ -789,9 +793,36 @@ function nextScene(choice) {
 
             <br><br>
 
-            You don't know anyone here.
+            A woman is arranging a small display of flowers.
+            An old man is looking through a box of books.
 
             For now, nothing is asking anything from you.
+        `;
+
+        choices.innerHTML = `
+            <button class="choice" onclick="marketBooks()">
+                Look through the old books.
+            </button>
+
+            <button class="choice" onclick="marketFlowers()">
+                Look at the flowers.
+            </button>
+
+            <button class="choice" onclick="marketPeople()">
+                Watch the people for a while.
+            </button>
+
+            <button class="choice" onclick="endMoment()">
+                Leave the market.
+            </button>
+
+            <input class="free-input"
+                   id="freeAction"
+                   placeholder="Or tell the world what you want to do...">
+
+            <button class="choice" onclick="freeAction()">
+                → Continue
+            </button>
         `;
 
     }
@@ -809,11 +840,34 @@ function nextScene(choice) {
 
             <br><br>
 
-            You have time.
+            You have about fifteen minutes before your
+            morning starts to feel like it's disappearing.
 
             You could wait.
 
             Or you could change your mind.
+        `;
+
+        choices.innerHTML = `
+            <button class="choice" onclick="waitCoffee()">
+                Wait in line.
+            </button>
+
+            <button class="choice" onclick="leaveCoffee()">
+                Leave and find somewhere quieter.
+            </button>
+
+            <button class="choice" onclick="coffeeObserve()">
+                Stay nearby and see what happens.
+            </button>
+
+            <input class="free-input"
+                   id="freeAction"
+                   placeholder="Or tell the world what you want to do...">
+
+            <button class="choice" onclick="freeAction()">
+                → Continue
+            </button>
         `;
 
     }
@@ -835,6 +889,28 @@ function nextScene(choice) {
             You hear music somewhere nearby.
         `;
 
+        choices.innerHTML = `
+            <button class="choice" onclick="followMusic()">
+                Follow the music.
+            </button>
+
+            <button class="choice" onclick="keepWalking()">
+                Keep walking.
+            </button>
+
+            <button class="choice" onclick="stopAndObserve()">
+                Stop and look around.
+            </button>
+
+            <input class="free-input"
+                   id="freeAction"
+                   placeholder="Or tell the world what you want to do...">
+
+            <button class="choice" onclick="freeAction()">
+                → Continue
+            </button>
+        `;
+
     }
 
     else if (choice === "random") {
@@ -852,16 +928,74 @@ function nextScene(choice) {
             will matter.
         `;
 
-    }
+        choices.innerHTML = `
+            <button class="choice" onclick="randomPerson()">
+                See where the street leads.
+            </button>
 
-    choices.innerHTML = `
-        <button class="choice" onclick="continueWorld()">
-            Continue.
+            <button class="choice" onclick="randomCafe()">
+                Stop at the first café you see.
+            </button>
+
+            <button class="choice" onclick="randomPark()">
+                Turn toward the trees.
+            </button>
+
+            <input class="free-input"
+                   id="freeAction"
+                   placeholder="Or tell the world what you want to do...">
+
+            <button class="choice" onclick="freeAction()">
+                → Continue
+            </button>
+        `;
+    }
+}
+
+
+/* ---------- COFFEE ---------- */
+
+function waitCoffee() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You decide to wait.
+
+        <br><br>
+
+        The line moves slowly.
+
+        You check your phone once.
+
+        Then again.
+
+        <br><br>
+
+        After about twelve minutes, you're finally
+        standing at the counter.
+
+        <br><br>
+
+        The barista asks:
+
+        <em>"What can I get for you?"</em>
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="orderCoffee()">
+            Order an iced coffee.
+        </button>
+
+        <button class="choice" onclick="orderHotCoffee()">
+            Order a hot coffee.
+        </button>
+
+        <button class="choice" onclick="changeMind()">
+            Change your mind.
         </button>
 
         <input class="free-input"
                id="freeAction"
-               placeholder="Or tell the world what you want to do...">
+               placeholder="Tell the world what you order...">
 
         <button class="choice" onclick="freeAction()">
             → Continue
@@ -869,48 +1003,389 @@ function nextScene(choice) {
     `;
 }
 
-function continueWorld() {
 
-    document.getElementById("sceneText").innerHTML += `
+function orderCoffee() {
 
-        <br><br>
-
-        The city continues around you.
+    document.getElementById("sceneText").innerHTML = `
+        You order an iced coffee.
 
         <br><br>
 
-        <em>Something may happen. Or nothing may happen.</em>
+        The drink is ready a few minutes later.
+
+        You step outside.
+
+        <br><br>
+
+        It is now 10:46 AM.
+
+        The city has become noticeably busier.
+
+        <br><br>
+
+        You take the first sip.
+
+        For a moment, you have nowhere you need to be.
     `;
 
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="returnMarket()">
+            Go back toward the market.
+        </button>
+
+        <button class="choice" onclick="walkCoffee()">
+            Keep walking.
+        </button>
+
+        <button class="choice" onclick="sitCoffee()">
+            Find somewhere to sit.
+        </button>
+
+        <button class="choice" onclick="finishJourney()">
+            End the journey here.
+        </button>
+    `;
 }
 
-function freeAction() {
 
-    const input = document.getElementById("freeAction");
+function orderHotCoffee() {
 
-    if (!input || !input.value.trim()) return;
-
-    document.getElementById("sceneText").innerHTML += `
+    document.getElementById("sceneText").innerHTML = `
+        You order a hot coffee.
 
         <br><br>
 
-        <strong>${playerName}</strong> decides:
+        While you wait, you notice someone standing
+        near the window, sketching in a notebook.
 
-        “${input.value}”
-
-        <br><br>
-
-        The world takes note.
+        They seem completely absorbed in what they're doing.
     `;
 
-    input.value = "";
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="observeSketcher()">
+            Look at what they're drawing.
+        </button>
 
+        <button class="choice" onclick="ignoreSketcher()">
+            Take your coffee and leave.
+        </button>
+    `;
 }
+
+
+function leaveCoffee() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You decide not to wait.
+
+        <br><br>
+
+        You walk another block and find a much smaller café.
+
+        There are only three people inside.
+
+        <br><br>
+
+        It feels quieter here.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="quietCafe()">
+            Go inside.
+        </button>
+
+        <button class="choice" onclick="keepWalking()">
+            Keep walking.
+        </button>
+    `;
+}
+
+
+function coffeeObserve() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You decide not to commit either way.
+
+        You stand outside the café for a moment.
+
+        <br><br>
+
+        A delivery cyclist stops nearby.
+
+        Someone comes out carrying a stack of pastries.
+
+        A woman inside laughs loudly.
+
+        <br><br>
+
+        Nothing particularly important happens.
+
+        But you realize you've been standing there
+        longer than you expected.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="waitCoffee()">
+            Get in line.
+        </button>
+
+        <button class="choice" onclick="leaveCoffee()">
+            Walk away.
+        </button>
+    `;
+}
+
+
+/* ---------- OTHER PATHS ---------- */
+
+function marketBooks() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You pick up an old paperback.
+
+        The cover is faded.
+
+        Someone has written a name inside the first page.
+
+        <br><br>
+
+        You don't recognize the name.
+
+        But you wonder who owned the book before you.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="keepBook()">
+            Buy the book.
+        </button>
+
+        <button class="choice" onclick="putBookBack()">
+            Put it back.
+        </button>
+    `;
+}
+
+
+function marketFlowers() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You stop at the flower table.
+
+        The woman arranging the flowers looks up.
+
+        <br><br>
+
+        "These are from a farm outside Boston,"
+        she says.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="askFlowers()">
+            Ask her which flowers she likes best.
+        </button>
+
+        <button class="choice" onclick="buyFlowers()">
+            Buy a small bouquet.
+        </button>
+
+        <button class="choice" onclick="leaveFlowers()">
+            Thank her and move on.
+        </button>
+    `;
+}
+
+
+function marketPeople() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You step aside and simply watch.
+
+        Couples move between the stalls.
+
+        A child is holding a tiny plant.
+
+        Someone is arguing gently about the price of an old chair.
+
+        <br><br>
+
+        You realize there are hundreds of small lives
+        happening around you at the same time.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="endMoment()">
+            Keep observing.
+        </button>
+
+        <button class="choice" onclick="leaveMarket()">
+            Leave the market.
+        </button>
+    `;
+}
+
+
+function followMusic() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You follow the music.
+
+        <br><br>
+
+        It gets louder as you turn the corner.
+
+        A young musician is playing outside a bookstore.
+
+        A small crowd has gathered.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="listenMusic()">
+            Stop and listen.
+        </button>
+
+        <button class="choice" onclick="walkPastMusic()">
+            Keep walking.
+        </button>
+    `;
+}
+
+
+function keepWalking() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You keep walking.
+
+        <br><br>
+
+        Ten minutes pass.
+
+        You haven't found anything particularly interesting.
+
+        <br><br>
+
+        And somehow, that's okay.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="endMoment()">
+            Continue exploring.
+        </button>
+
+        <button class="choice" onclick="finishJourney()">
+            End the journey.
+        </button>
+    `;
+}
+
+
+function stopAndObserve() {
+
+    document.getElementById("sceneText").innerHTML = `
+        You stop.
+
+        <br><br>
+
+        For the first time this morning,
+        you don't immediately decide what to do next.
+
+        You just watch the street.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="keepWalking()">
+            Continue walking.
+        </button>
+
+        <button class="choice" onclick="finishJourney()">
+            End the journey.
+        </button>
+    `;
+}
+
+
+function randomPerson() {
+    document.getElementById("sceneText").innerHTML = `
+        The street opens into a small square.
+
+        Someone is sitting alone on a bench,
+        reading a newspaper.
+
+        They glance up briefly as you pass.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="endMoment()">
+            Keep walking.
+        </button>
+
+        <button class="choice" onclick="finishJourney()">
+            End the journey.
+        </button>
+    `;
+}
+
+
+function randomCafe() {
+    leaveCoffee();
+}
+
+
+function randomPark() {
+    document.getElementById("sceneText").innerHTML = `
+        You turn toward the trees.
+
+        The sound of traffic becomes quieter.
+
+        <br><br>
+
+        You find a small patch of grass
+        where someone has left a blanket.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="endMoment()">
+            Sit down.
+        </button>
+
+        <button class="choice" onclick="keepWalking()">
+            Keep going.
+        </button>
+    `;
+}
+
+
+/* ---------- SIMPLE CONTINUATIONS ---------- */
+
+function endMoment() {
+
+    document.getElementById("sceneText").innerHTML += `
+        <br><br>
+
+        You stay for a little while.
+
+        <br><br>
+
+        Nothing dramatic happens.
+
+        <br><br>
+
+        Then the city gives you another possibility.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+        <button class="choice" onclick="keepWalking()">
+            Move on.
+        </button>
+
+        <button class="choice" onclick="finishJourney()">
+            End the journey.
+        </button>
+    `;
+}
+
 
 function finishJourney() {
-
     showScreen("archive");
-
 }
 
 </script>
