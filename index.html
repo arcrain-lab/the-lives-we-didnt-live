@@ -1137,6 +1137,11 @@ async function sendAction(action) {
 // =====================================================
 
 function renderWorldResponse(data) {
+    
+    window.currentWorldChoices =
+        Array.isArray(data.choices)
+            ? data.choices
+            : [];
 
     const sceneText =
         document.getElementById("sceneText");
@@ -1190,29 +1195,28 @@ function renderWorldResponse(data) {
 
     let html = "";
 
-    if (Array.isArray(data.choices)) {
+  if (Array.isArray(data.choices)) {
 
-        data.choices.forEach(
-            (choice, index) => {
+    data.choices.forEach(
+        (choice, index) => {
 
-                html += `
+            html += `
 
-                    <button
-                        class="choice"
-                        onclick="sendAction(${JSON.stringify(choice)})">
+                <button
+                    class="choice"
+                    onclick="handleChoice(${index})"
+                >
+                    ${String.fromCharCode(65 + index)}.
+                    ${escapeHtml(choice)}
+                </button>
 
-                        ${String.fromCharCode(65 + index)}.
-                        ${escapeHtml(choice)}
+            `;
 
-                    </button>
+        }
+    );
+}
 
-                `;
-
-            }
-        );
-
-    }
-
+    
     // -----------------------------------------
     // Free-form action
     // -----------------------------------------
@@ -1258,6 +1262,19 @@ function renderWorldResponse(data) {
     choices.innerHTML = html;
 }
 
+function handleChoice(index) {
+
+    const choices =
+        window.currentWorldChoices || [];
+
+    const choice =
+        choices[index];
+
+    if (!choice) return;
+
+    sendAction(choice);
+}
+    
 // =====================================================
 // FREE FORM ACTION
 // =====================================================
