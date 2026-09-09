@@ -968,7 +968,10 @@ async function sendAction(action) {
     const choices =
         document.getElementById("choices");
 
-    // Record action
+    // -----------------------------------------
+    // Record player's action
+    // -----------------------------------------
+
     journeyHistory.push({
         type: "player",
         action: action,
@@ -976,7 +979,10 @@ async function sendAction(action) {
         location: worldState.location
     });
 
-    // Temporary loading state
+    // -----------------------------------------
+    // Loading state
+    // -----------------------------------------
+
     sceneText.innerHTML = `
         <em>The world is responding...</em>
     `;
@@ -993,6 +999,26 @@ async function sendAction(action) {
         </div>
     `;
 
+    // -----------------------------------------
+    // Send CURRENT WORLD + HISTORY to AI
+    // -----------------------------------------
+
+    const requestBody = {
+
+        playerAction: action,
+
+        worldState: {
+
+            ...worldState,
+
+            // Give the AI memory of what just happened
+            journeyHistory:
+                journeyHistory.slice(-12)
+
+        }
+
+    };
+
     try {
 
         const response = await fetch(
@@ -1004,13 +1030,7 @@ async function sendAction(action) {
                     "Content-Type": "application/json"
                 },
 
-                body: JSON.stringify({
-
-                    playerAction: action,
-
-                    worldState: worldState
-
-                })
+                body: JSON.stringify(requestBody)
             }
         );
 
@@ -1026,19 +1046,48 @@ async function sendAction(action) {
             );
         }
 
-        // Update world
-        worldState = {
-            ...worldState,
-            ...(data.worldState || {})
-        };
+        // -----------------------------------------
+        // Update world state
+        // -----------------------------------------
 
+        if (data.worldState) {
+
+            worldState = {
+                ...worldState,
+                ...data.worldState
+            };
+
+        }
+
+        // -----------------------------------------
         // Record AI response
+        // -----------------------------------------
+
         journeyHistory.push({
+
             type: "world",
-            sceneTitle: data.sceneTitle || "",
-            sceneText: data.sceneText || "",
-            time: worldState.time,
-            location: worldState.location
+
+            scene:
+                data.scene ||
+                data.sceneText ||
+                "",
+
+            choices:
+                Array.isArray(data.choices)
+                    ? data.choices
+                    : [],
+
+            time:
+                worldState.time,
+
+            location:
+                worldState.location,
+
+            importantPeople:
+                data.importantPeople || [],
+
+            memoryMoment:
+                data.memoryMoment || false
         });
 
         renderWorldResponse(data);
@@ -1062,15 +1111,22 @@ async function sendAction(action) {
 
         choices.innerHTML = `
 
-            <button class="choice"
-                    onclick="sendAction(${JSON.stringify(action)})">
+            <button
+                class="choice"
+                onclick="sendAction(${JSON.stringify(action)})">
+
                 Try again.
+
             </button>
 
-            <button class="choice"
-                    onclick="enterBoston()">
+            <button
+                class="choice"
+                onclick="enterBoston()">
+
                 Return to the beginning.
+
             </button>
+
         `;
     }
 }
@@ -1088,32 +1144,51 @@ function renderWorldResponse(data) {
     const choices =
         document.getElementById("choices");
 
-    const title =
-        data.sceneTitle || "";
+    // -----------------------------------------
+    // AI can return "scene"
+    // -----------------------------------------
 
     const text =
-        data.sceneText || "";
+        data.scene ||
+        data.sceneText ||
+        "";
 
-    sceneText.innerHTML = `
+    // -----------------------------------------
+    // Display scene
+    // -----------------------------------------
 
-        ${title
-            ? `<div style="
-                font-size:12px;
-                font-family:Arial,sans-serif;
-                letter-spacing:2px;
-                text-transform:uppercase;
-                opacity:.45;
-                margin-bottom:15px;
-              ">${escapeHtml(title)}</div>`
-            : ""
-        }
+    sceneText.innerHTML =
+        formatSceneText(text);
 
-        ${formatSceneText(text)}
-    `;
+    // -----------------------------------------
+    // Update world header if AI provides time
+    // -----------------------------------------
 
+    const worldHeader =
+        document.querySelector(".world-header");
+
+    if (
+        worldHeader &&
+        worldState.time
+    ) {
+
+        worldHeader.innerHTML = `
+
+            <span>BOSTON</span>
+
+            <span>
+                ${escapeHtml(String(worldState.time))}
+            </span>
+
+        `;
+
+    }
+
+    // -----------------------------------------
+    // Build choices
+    // -----------------------------------------
 
     let html = "";
-
 
     if (Array.isArray(data.choices)) {
 
@@ -1124,16 +1199,23 @@ function renderWorldResponse(data) {
 
                     <button
                         class="choice"
-                        onclick="sendAction(${JSON.stringify(choice)})"
-                    >
+                        onclick="sendAction(${JSON.stringify(choice)})">
+
                         ${String.fromCharCode(65 + index)}.
                         ${escapeHtml(choice)}
+
                     </button>
+
                 `;
+
             }
         );
+
     }
 
+    // -----------------------------------------
+    // Free-form action
+    // -----------------------------------------
 
     html += `
 
@@ -1145,29 +1227,36 @@ function renderWorldResponse(data) {
 
         <button
             class="choice"
-            onclick="freeAction()"
-        >
+            onclick="freeAction()">
+
             → Do it
+
         </button>
+
 
         <button
             class="choice"
-            onclick="sendAction('I stay here for a while and simply observe what happens.')"
-        >
+            onclick="sendAction(
+                'I stay here for a while and simply observe what happens.'
+            )">
+
             Stay and observe.
+
         </button>
+
 
         <button
             class="choice"
-            onclick="finishJourney()"
-        >
+            onclick="finishJourney()">
+
             End this journey.
+
         </button>
+
     `;
 
     choices.innerHTML = html;
 }
-
 
 // =====================================================
 // FREE FORM ACTION
