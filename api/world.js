@@ -1,7 +1,5 @@
 export default async function handler(req, res) {
-  // -----------------------------
   // CORS
-  // -----------------------------
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -27,17 +25,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // -----------------------------
-    // World Engine instructions
-    // -----------------------------
     const systemPrompt = `
 You are the World Engine for "The Lives We Didn't Live."
 
 This is an interactive narrative set in a realistic version of Boston.
 
-Your role is NOT to write a predetermined story.
+You are not writing a predetermined story.
 
-Your role is to simulate the next believable moment in the world after the player's action.
+You simulate the next believable moment after the player's action.
 
 CORE PRINCIPLES:
 
@@ -45,28 +40,22 @@ CORE PRINCIPLES:
 2. The player does NOT control other people's reactions.
 3. Other people have their own agency.
 4. The world follows realistic physical, social, cultural, legal, financial, and temporal rules.
-5. Do not guarantee a desired outcome.
+5. Never guarantee the player's desired outcome.
 6. Uncertainty is part of the experience.
-7. The player's chosen theme affects tone, not outcome.
+7. The chosen Journey theme affects tone, not outcome.
 8. Every action should move the world forward.
-9. Do not repeatedly reset the scene.
-10. Do not force a dramatic event if an ordinary response is more believable.
-11. Important people should remain visually and narratively consistent.
-12. Preserve continuity from the previous world state.
-
-The experience is a possibility simulator, not a fantasy simulator.
-
-The player may use natural language.
-Interpret their action in the most reasonable way while preserving their agency.
+9. Preserve continuity.
+10. Do not reset the scene.
+11. Do not force drama when an ordinary response is more believable.
+12. The world should feel alive and unpredictable.
+13. The player can use natural language to describe actions.
+14. Interpret the player's action reasonably while preserving their agency.
 
 Generate the next meaningful moment.
 
-Return ONLY the structured JSON requested by the response schema.
+Return ONLY the structured JSON requested by the schema.
 `;
 
-    // -----------------------------
-    // Player + world context
-    // -----------------------------
     const userPrompt = `
 PLAYER ACTION:
 ${playerAction}
@@ -77,17 +66,16 @@ ${JSON.stringify(worldState || {}, null, 2)}
 Generate the next moment in the world.
 `;
 
-    // -----------------------------
-    // OpenAI Responses API
-    // -----------------------------
     const response = await fetch(
       "https://api.openai.com/v1/responses",
       {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
         },
+
         body: JSON.stringify({
           model: "gpt-5.6-luna",
 
@@ -109,11 +97,16 @@ Generate the next moment in the world.
           text: {
             format: {
               type: "json_schema",
+
               name: "world_engine_response",
+
               strict: true,
+
               schema: {
                 type: "object",
+
                 additionalProperties: false,
+
                 properties: {
                   scene: {
                     type: "string"
@@ -127,23 +120,27 @@ Generate the next moment in the world.
                   },
 
                   worldState: {
-                    type: "object",
-                    additionalProperties: true
+                    type: "string"
                   },
 
                   importantPeople: {
                     type: "array",
+
                     items: {
                       type: "object",
+
                       additionalProperties: false,
+
                       properties: {
                         name: {
                           type: "string"
                         },
+
                         description: {
                           type: "string"
                         }
                       },
+
                       required: [
                         "name",
                         "description"
@@ -174,9 +171,7 @@ Generate the next moment in the world.
 
     const data = await response.json();
 
-    // -----------------------------
-    // OpenAI error handling
-    // -----------------------------
+    // OpenAI error
     if (!response.ok) {
       console.error("OpenAI error:", data);
 
@@ -186,18 +181,19 @@ Generate the next moment in the world.
       });
     }
 
-    // -----------------------------
-    // Extract model output
-    // -----------------------------
+    // Get model output
     let text = data.output_text || "";
 
-    // Fallback for Responses API output structure
+    // Fallback extraction
     if (!text && Array.isArray(data.output)) {
       for (const item of data.output) {
         if (!Array.isArray(item.content)) continue;
 
         for (const content of item.content) {
-          if (content.type === "output_text" && content.text) {
+          if (
+            content.type === "output_text" &&
+            content.text
+          ) {
             text += content.text;
           }
         }
@@ -213,39 +209,32 @@ Generate the next moment in the world.
       });
     }
 
-    // -----------------------------
-    // Parse structured JSON
-    // -----------------------------
+    // Parse JSON
     let result;
 
     try {
       result = JSON.parse(text);
-    } catch (parseError) {
-      console.error("JSON parsing failed.");
-      console.error("Raw model output:", text);
+    } catch (error) {
+      console.error("Invalid JSON:", text);
 
-      // Extra safety:
-      // remove accidental markdown code fences
-      const cleaned = text
-        .replace(/^```json\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
+      return res.status(500).json({
+        ok: false,
+        error: "AI returned invalid JSON",
+        raw: text
+      });
+    }
 
+    // Convert worldState back into an object
+    if (typeof result.worldState === "string") {
       try {
-        result = JSON.parse(cleaned);
-      } catch (secondError) {
-        return res.status(500).json({
-          ok: false,
-          error: "AI returned invalid JSON",
-          raw: text
-        });
+        result.worldState = JSON.parse(result.worldState);
+      } catch (error) {
+        console.error("worldState parsing failed:", result.worldState);
+        result.worldState = {};
       }
     }
 
-    // -----------------------------
-    // Success
-    // -----------------------------
+    // Return result
     return res.status(200).json({
       ok: true,
       ...result,
