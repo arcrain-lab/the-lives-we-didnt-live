@@ -705,6 +705,31 @@ button, input, select {
 
 let selectedTheme = null;
 let playerName = "";
+let playerAge = "";
+let playerLanguage = "";
+
+let worldState = {
+    time: "Saturday, 10:27 AM",
+    location: "Boston",
+    people: [],
+    events: [],
+    openThreads: []
+};
+
+let journeyHistory = [];
+
+
+// =====================================================
+// VERCEL AI BACKEND
+// =====================================================
+
+const WORLD_ENGINE_URL =
+    "https://the-lives-we-didnt-live-nnea78at6-arcrain.vercel.app/api/world";
+
+
+// =====================================================
+// SCREEN CONTROL
+// =====================================================
 
 function showScreen(id) {
 
@@ -714,8 +739,13 @@ function showScreen(id) {
 
     document.getElementById(id).classList.add("active");
 
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
 }
+
+
+// =====================================================
+// PHOTO
+// =====================================================
 
 function previewPhoto(event) {
 
@@ -727,665 +757,529 @@ function previewPhoto(event) {
 
     reader.onload = function(e) {
 
-        const img = document.getElementById("photoPreview");
+        const img =
+            document.getElementById("photoPreview");
 
         img.src = e.target.result;
         img.style.display = "inline-block";
-
     };
 
     reader.readAsDataURL(file);
 }
 
+
+// =====================================================
+// CHARACTER
+// =====================================================
+
 function goToJourney() {
 
-    playerName = document.getElementById("name").value || "You";
+    playerName =
+        document.getElementById("name").value || "You";
+
+    playerAge =
+        document.getElementById("age").value || "";
+
+    playerLanguage =
+        document.getElementById("language").value || "";
 
     showScreen("journey");
 }
 
+
+// =====================================================
+// JOURNEY SETTINGS
+// =====================================================
+
 function selectTheme(button, theme) {
 
-    document.querySelectorAll(".theme").forEach(btn => {
-        btn.classList.remove("selected");
-    });
+    document.querySelectorAll(".theme")
+        .forEach(btn => {
+            btn.classList.remove("selected");
+        });
 
     button.classList.add("selected");
 
     selectedTheme = theme;
 }
 
+
 function selectSetting(button) {
 
     const group = button.parentElement;
 
-    group.querySelectorAll("button").forEach(btn => {
-        btn.classList.remove("selected");
-    });
+    group.querySelectorAll("button")
+        .forEach(btn => {
+            btn.classList.remove("selected");
+        });
 
     button.classList.add("selected");
 }
 
+
+function getSetting(groupTitle) {
+
+    const settings =
+        document.querySelectorAll(".setting");
+
+    for (const setting of settings) {
+
+        const title =
+            setting.querySelector(".setting-title");
+
+        if (
+            title &&
+            title.textContent.trim() === groupTitle
+        ) {
+
+            const selected =
+                setting.querySelector(".selected");
+
+            return selected
+                ? selected.textContent.trim()
+                : "";
+        }
+    }
+
+    return "";
+}
+
+
+// =====================================================
+// ENTER BOSTON
+// =====================================================
+
 function enterBoston() {
 
+    const theme =
+        selectedTheme || "Ordinary";
+
+    const intensity =
+        getSetting("Intensity") || "Balanced";
+
+    const tempo =
+        getSetting("Tempo") || "Normal";
+
+    worldState = {
+
+        time: "Saturday, 10:27 AM",
+
+        location:
+            "Boston — an ordinary Saturday morning",
+
+        people: [],
+
+        events: [],
+
+        openThreads: [],
+
+        player: {
+            name: playerName,
+            age: playerAge,
+            language: playerLanguage
+        },
+
+        journey: {
+            theme,
+            intensity,
+            tempo
+        }
+    };
+
+    journeyHistory = [];
+
+    document.getElementById("sceneText").innerHTML = `
+        You have no plans today.
+
+        <br><br>
+
+        Boston is already awake.
+
+        <br><br>
+
+        You walk outside without deciding
+        where you're going.
+
+        <br><br>
+
+        A few blocks away, you notice a small
+        community market beginning to fill the street.
+
+        <br><br>
+
+        Nothing about it seems particularly important.
+
+        <br><br>
+
+        You could keep walking.
+
+        Or you could find out what's there.
+    `;
+
+    document.getElementById("choices").innerHTML = `
+
+        <button class="choice"
+                onclick="sendAction('Go inside the community market and look around.')">
+            A. Go inside and look around.
+        </button>
+
+        <button class="choice"
+                onclick="sendAction('Get a coffee first.')">
+            B. Get a coffee first.
+        </button>
+
+        <button class="choice"
+                onclick="sendAction('Keep walking.')">
+            C. Keep walking.
+        </button>
+
+        <button class="choice"
+                onclick="sendAction('Choose a direction without thinking.')">
+            D. Choose a direction without thinking.
+        </button>
+
+        <input
+            class="free-input"
+            id="freeAction"
+            placeholder="Or tell the world what you want to do..."
+        >
+
+        <button class="choice"
+                onclick="freeAction()">
+            → Do it
+        </button>
+    `;
+
     showScreen("world");
-
 }
 
-let sceneStep = 0;
 
-function nextScene(choice) {
+// =====================================================
+// AI ACTION
+// =====================================================
 
-    const text = document.getElementById("sceneText");
-    const choices = document.getElementById("choices");
+async function sendAction(action) {
 
-    sceneStep = 1;
+    if (!action || !action.trim()) return;
 
-    if (choice === "market") {
+    const sceneText =
+        document.getElementById("sceneText");
 
-        text.innerHTML = `
-            You step into the market.
+    const choices =
+        document.getElementById("choices");
+
+    // Record action
+    journeyHistory.push({
+        type: "player",
+        action: action,
+        time: worldState.time,
+        location: worldState.location
+    });
+
+    // Temporary loading state
+    sceneText.innerHTML = `
+        <em>The world is responding...</em>
+    `;
+
+    choices.innerHTML = `
+        <div style="
+            opacity:.45;
+            font-family:Arial,sans-serif;
+            font-size:11px;
+            letter-spacing:1px;
+            text-transform:uppercase;
+        ">
+            World Engine
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(
+            WORLD_ENGINE_URL,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    playerAction: action,
+
+                    worldState: worldState
+
+                })
+            }
+        );
+
+        const data =
+            await response.json();
+
+        if (!response.ok || !data.ok) {
+
+            throw new Error(
+                data.error
+                    ? JSON.stringify(data.error)
+                    : "World Engine request failed."
+            );
+        }
+
+        // Update world
+        worldState = {
+            ...worldState,
+            ...(data.worldState || {})
+        };
+
+        // Record AI response
+        journeyHistory.push({
+            type: "world",
+            sceneTitle: data.sceneTitle || "",
+            sceneText: data.sceneText || "",
+            time: worldState.time,
+            location: worldState.location
+        });
+
+        renderWorldResponse(data);
+
+    } catch (error) {
+
+        console.error(error);
+
+        sceneText.innerHTML = `
+            <strong>The world went quiet for a moment.</strong>
 
             <br><br>
 
-            There are books, plants, handmade objects and
-            small prints spread across several tables.
+            Something prevented the World Engine
+            from responding.
 
             <br><br>
 
-            A woman is arranging a small display of flowers.
-            An old man is looking through a box of books.
-
-            For now, nothing is asking anything from you.
+            <small>${escapeHtml(error.message)}</small>
         `;
 
         choices.innerHTML = `
-            <button class="choice" onclick="marketBooks()">
-                Look through the old books.
+
+            <button class="choice"
+                    onclick="sendAction(${JSON.stringify(action)})">
+                Try again.
             </button>
 
-            <button class="choice" onclick="marketFlowers()">
-                Look at the flowers.
-            </button>
-
-            <button class="choice" onclick="marketPeople()">
-                Watch the people for a while.
-            </button>
-
-            <button class="choice" onclick="endMoment()">
-                Leave the market.
-            </button>
-
-            <input class="free-input"
-                   id="freeAction"
-                   placeholder="Or tell the world what you want to do...">
-
-            <button class="choice" onclick="freeAction()">
-                → Continue
-            </button>
-        `;
-
-    }
-
-    else if (choice === "coffee") {
-
-        text.innerHTML = `
-            You decide coffee comes first.
-
-            <br><br>
-
-            A small café is just around the corner.
-
-            The line is longer than you expected.
-
-            <br><br>
-
-            You have about fifteen minutes before your
-            morning starts to feel like it's disappearing.
-
-            You could wait.
-
-            Or you could change your mind.
-        `;
-
-        choices.innerHTML = `
-            <button class="choice" onclick="waitCoffee()">
-                Wait in line.
-            </button>
-
-            <button class="choice" onclick="leaveCoffee()">
-                Leave and find somewhere quieter.
-            </button>
-
-            <button class="choice" onclick="coffeeObserve()">
-                Stay nearby and see what happens.
-            </button>
-
-            <input class="free-input"
-                   id="freeAction"
-                   placeholder="Or tell the world what you want to do...">
-
-            <button class="choice" onclick="freeAction()">
-                → Continue
-            </button>
-        `;
-
-    }
-
-    else if (choice === "walk") {
-
-        text.innerHTML = `
-            You keep walking.
-
-            <br><br>
-
-            The market disappears behind you.
-
-            A street you've never really noticed before
-            opens up ahead.
-
-            <br><br>
-
-            You hear music somewhere nearby.
-        `;
-
-        choices.innerHTML = `
-            <button class="choice" onclick="followMusic()">
-                Follow the music.
-            </button>
-
-            <button class="choice" onclick="keepWalking()">
-                Keep walking.
-            </button>
-
-            <button class="choice" onclick="stopAndObserve()">
-                Stop and look around.
-            </button>
-
-            <input class="free-input"
-                   id="freeAction"
-                   placeholder="Or tell the world what you want to do...">
-
-            <button class="choice" onclick="freeAction()">
-                → Continue
-            </button>
-        `;
-
-    }
-
-    else if (choice === "random") {
-
-        text.innerHTML = `
-            You turn left without checking where the street goes.
-
-            <br><br>
-
-            For the next few minutes, you simply walk.
-
-            <br><br>
-
-            You don't know yet whether this decision
-            will matter.
-        `;
-
-        choices.innerHTML = `
-            <button class="choice" onclick="randomPerson()">
-                See where the street leads.
-            </button>
-
-            <button class="choice" onclick="randomCafe()">
-                Stop at the first café you see.
-            </button>
-
-            <button class="choice" onclick="randomPark()">
-                Turn toward the trees.
-            </button>
-
-            <input class="free-input"
-                   id="freeAction"
-                   placeholder="Or tell the world what you want to do...">
-
-            <button class="choice" onclick="freeAction()">
-                → Continue
+            <button class="choice"
+                    onclick="enterBoston()">
+                Return to the beginning.
             </button>
         `;
     }
 }
 
 
-/* ---------- COFFEE ---------- */
+// =====================================================
+// RENDER AI RESPONSE
+// =====================================================
 
-function waitCoffee() {
+function renderWorldResponse(data) {
 
-    document.getElementById("sceneText").innerHTML = `
-        You decide to wait.
+    const sceneText =
+        document.getElementById("sceneText");
 
-        <br><br>
+    const choices =
+        document.getElementById("choices");
 
-        The line moves slowly.
+    const title =
+        data.sceneTitle || "";
 
-        You check your phone once.
+    const text =
+        data.sceneText || "";
 
-        Then again.
+    sceneText.innerHTML = `
 
-        <br><br>
+        ${title
+            ? `<div style="
+                font-size:12px;
+                font-family:Arial,sans-serif;
+                letter-spacing:2px;
+                text-transform:uppercase;
+                opacity:.45;
+                margin-bottom:15px;
+              ">${escapeHtml(title)}</div>`
+            : ""
+        }
 
-        After about twelve minutes, you're finally
-        standing at the counter.
-
-        <br><br>
-
-        The barista asks:
-
-        <em>"What can I get for you?"</em>
+        ${formatSceneText(text)}
     `;
 
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="orderCoffee()">
-            Order an iced coffee.
+
+    let html = "";
+
+
+    if (Array.isArray(data.choices)) {
+
+        data.choices.forEach(
+            (choice, index) => {
+
+                html += `
+
+                    <button
+                        class="choice"
+                        onclick="sendAction(${JSON.stringify(choice)})"
+                    >
+                        ${String.fromCharCode(65 + index)}.
+                        ${escapeHtml(choice)}
+                    </button>
+                `;
+            }
+        );
+    }
+
+
+    html += `
+
+        <input
+            class="free-input"
+            id="freeAction"
+            placeholder="Or tell the world what you want to do..."
+        >
+
+        <button
+            class="choice"
+            onclick="freeAction()"
+        >
+            → Do it
         </button>
 
-        <button class="choice" onclick="orderHotCoffee()">
-            Order a hot coffee.
+        <button
+            class="choice"
+            onclick="sendAction('I stay here for a while and simply observe what happens.')"
+        >
+            Stay and observe.
         </button>
 
-        <button class="choice" onclick="changeMind()">
-            Change your mind.
-        </button>
-
-        <input class="free-input"
-               id="freeAction"
-               placeholder="Tell the world what you order...">
-
-        <button class="choice" onclick="freeAction()">
-            → Continue
+        <button
+            class="choice"
+            onclick="finishJourney()"
+        >
+            End this journey.
         </button>
     `;
+
+    choices.innerHTML = html;
 }
 
 
-function orderCoffee() {
+// =====================================================
+// FREE FORM ACTION
+// =====================================================
 
-    document.getElementById("sceneText").innerHTML = `
-        You order an iced coffee.
+function freeAction() {
 
-        <br><br>
+    const input =
+        document.getElementById("freeAction");
 
-        The drink is ready a few minutes later.
+    if (!input) return;
 
-        You step outside.
+    const action =
+        input.value.trim();
 
-        <br><br>
+    if (!action) {
 
-        It is now 10:46 AM.
+        input.focus();
 
-        The city has become noticeably busier.
+        return;
+    }
 
-        <br><br>
-
-        You take the first sip.
-
-        For a moment, you have nowhere you need to be.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="returnMarket()">
-            Go back toward the market.
-        </button>
-
-        <button class="choice" onclick="walkCoffee()">
-            Keep walking.
-        </button>
-
-        <button class="choice" onclick="sitCoffee()">
-            Find somewhere to sit.
-        </button>
-
-        <button class="choice" onclick="finishJourney()">
-            End the journey here.
-        </button>
-    `;
+    sendAction(action);
 }
 
 
-function orderHotCoffee() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You order a hot coffee.
-
-        <br><br>
-
-        While you wait, you notice someone standing
-        near the window, sketching in a notebook.
-
-        They seem completely absorbed in what they're doing.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="observeSketcher()">
-            Look at what they're drawing.
-        </button>
-
-        <button class="choice" onclick="ignoreSketcher()">
-            Take your coffee and leave.
-        </button>
-    `;
-}
-
-
-function leaveCoffee() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You decide not to wait.
-
-        <br><br>
-
-        You walk another block and find a much smaller café.
-
-        There are only three people inside.
-
-        <br><br>
-
-        It feels quieter here.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="quietCafe()">
-            Go inside.
-        </button>
-
-        <button class="choice" onclick="keepWalking()">
-            Keep walking.
-        </button>
-    `;
-}
-
-
-function coffeeObserve() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You decide not to commit either way.
-
-        You stand outside the café for a moment.
-
-        <br><br>
-
-        A delivery cyclist stops nearby.
-
-        Someone comes out carrying a stack of pastries.
-
-        A woman inside laughs loudly.
-
-        <br><br>
-
-        Nothing particularly important happens.
-
-        But you realize you've been standing there
-        longer than you expected.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="waitCoffee()">
-            Get in line.
-        </button>
-
-        <button class="choice" onclick="leaveCoffee()">
-            Walk away.
-        </button>
-    `;
-}
-
-
-/* ---------- OTHER PATHS ---------- */
-
-function marketBooks() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You pick up an old paperback.
-
-        The cover is faded.
-
-        Someone has written a name inside the first page.
-
-        <br><br>
-
-        You don't recognize the name.
-
-        But you wonder who owned the book before you.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="keepBook()">
-            Buy the book.
-        </button>
-
-        <button class="choice" onclick="putBookBack()">
-            Put it back.
-        </button>
-    `;
-}
-
-
-function marketFlowers() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You stop at the flower table.
-
-        The woman arranging the flowers looks up.
-
-        <br><br>
-
-        "These are from a farm outside Boston,"
-        she says.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="askFlowers()">
-            Ask her which flowers she likes best.
-        </button>
-
-        <button class="choice" onclick="buyFlowers()">
-            Buy a small bouquet.
-        </button>
-
-        <button class="choice" onclick="leaveFlowers()">
-            Thank her and move on.
-        </button>
-    `;
-}
-
-
-function marketPeople() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You step aside and simply watch.
-
-        Couples move between the stalls.
-
-        A child is holding a tiny plant.
-
-        Someone is arguing gently about the price of an old chair.
-
-        <br><br>
-
-        You realize there are hundreds of small lives
-        happening around you at the same time.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="endMoment()">
-            Keep observing.
-        </button>
-
-        <button class="choice" onclick="leaveMarket()">
-            Leave the market.
-        </button>
-    `;
-}
-
-
-function followMusic() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You follow the music.
-
-        <br><br>
-
-        It gets louder as you turn the corner.
-
-        A young musician is playing outside a bookstore.
-
-        A small crowd has gathered.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="listenMusic()">
-            Stop and listen.
-        </button>
-
-        <button class="choice" onclick="walkPastMusic()">
-            Keep walking.
-        </button>
-    `;
-}
-
-
-function keepWalking() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You keep walking.
-
-        <br><br>
-
-        Ten minutes pass.
-
-        You haven't found anything particularly interesting.
-
-        <br><br>
-
-        And somehow, that's okay.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="endMoment()">
-            Continue exploring.
-        </button>
-
-        <button class="choice" onclick="finishJourney()">
-            End the journey.
-        </button>
-    `;
-}
-
-
-function stopAndObserve() {
-
-    document.getElementById("sceneText").innerHTML = `
-        You stop.
-
-        <br><br>
-
-        For the first time this morning,
-        you don't immediately decide what to do next.
-
-        You just watch the street.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="keepWalking()">
-            Continue walking.
-        </button>
-
-        <button class="choice" onclick="finishJourney()">
-            End the journey.
-        </button>
-    `;
-}
-
-
-function randomPerson() {
-    document.getElementById("sceneText").innerHTML = `
-        The street opens into a small square.
-
-        Someone is sitting alone on a bench,
-        reading a newspaper.
-
-        They glance up briefly as you pass.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="endMoment()">
-            Keep walking.
-        </button>
-
-        <button class="choice" onclick="finishJourney()">
-            End the journey.
-        </button>
-    `;
-}
-
-
-function randomCafe() {
-    leaveCoffee();
-}
-
-
-function randomPark() {
-    document.getElementById("sceneText").innerHTML = `
-        You turn toward the trees.
-
-        The sound of traffic becomes quieter.
-
-        <br><br>
-
-        You find a small patch of grass
-        where someone has left a blanket.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="endMoment()">
-            Sit down.
-        </button>
-
-        <button class="choice" onclick="keepWalking()">
-            Keep going.
-        </button>
-    `;
-}
-
-
-/* ---------- SIMPLE CONTINUATIONS ---------- */
-
-function endMoment() {
-
-    document.getElementById("sceneText").innerHTML += `
-        <br><br>
-
-        You stay for a little while.
-
-        <br><br>
-
-        Nothing dramatic happens.
-
-        <br><br>
-
-        Then the city gives you another possibility.
-    `;
-
-    document.getElementById("choices").innerHTML = `
-        <button class="choice" onclick="keepWalking()">
-            Move on.
-        </button>
-
-        <button class="choice" onclick="finishJourney()">
-            End the journey.
-        </button>
-    `;
-}
-
+// =====================================================
+// END JOURNEY
+// =====================================================
 
 function finishJourney() {
+
+    createArchive();
+
     showScreen("archive");
+}
+
+
+// =====================================================
+// ARCHIVE
+// =====================================================
+
+function createArchive() {
+
+    const archiveTitle =
+        document.querySelector(".archive-title");
+
+    const archiveBody =
+        document.querySelector(".archive-card > div:nth-child(3)");
+
+    if (!archiveTitle || !archiveBody) return;
+
+    const theme =
+        selectedTheme || "Ordinary";
+
+    archiveTitle.textContent =
+        `Journey — ${theme}`;
+
+    archiveBody.innerHTML = `
+
+        You began this journey as
+        ${escapeHtml(playerName || "You")}.
+
+        <br><br>
+
+        You chose a
+        <strong>${escapeHtml(theme)}</strong>
+        kind of day.
+
+        <br><br>
+
+        ${journeyHistory.length}
+        moments unfolded.
+
+        <br><br>
+
+        This journey is now part of your archive:
+        a life that never happened.
+    `;
+
+    const observation =
+        document.getElementById("observation");
+
+    if (observation) {
+
+        observation.textContent =
+            "The Observer is still watching. " +
+            "More patterns will emerge as you live more journeys.";
+    }
+}
+
+
+// =====================================================
+// TEXT HELPERS
+// =====================================================
+
+function formatSceneText(text) {
+
+    return escapeHtml(text)
+        .replace(/\n\n/g, "<br><br>")
+        .replace(/\n/g, "<br>");
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 </script>
