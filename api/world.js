@@ -1,5 +1,8 @@
 export default async function handler(req, res) {
+  // =====================================================
   // CORS
+  // =====================================================
+
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -16,6 +19,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    // =====================================================
+    // INPUT
+    // =====================================================
+
     const { playerAction, worldState } = req.body || {};
 
     if (!playerAction) {
@@ -25,46 +32,220 @@ export default async function handler(req, res) {
       });
     }
 
+    // =====================================================
+    // WORLD ENGINE PROMPT
+    // =====================================================
+
     const systemPrompt = `
 You are the World Engine for "The Lives We Didn't Live."
 
 This is an interactive narrative set in a realistic version of Boston.
 
-You are not writing a predetermined story.
+You are NOT writing a predetermined story.
 
 You simulate the next believable moment after the player's action.
 
+The world should feel like a living place rather than a linear story.
+
 CORE PRINCIPLES:
 
-1. The player controls their own actions and intentions.
-2. The player does NOT control other people's reactions.
-3. Other people have their own agency.
-4. The world follows realistic physical, social, cultural, legal, financial, and temporal rules.
-5. Never guarantee the player's desired outcome.
-6. Uncertainty is part of the experience.
-7. The chosen Journey theme affects tone, not outcome.
-8. Every action should move the world forward.
-9. Preserve continuity.
-10. Do not reset the scene.
-11. Do not force drama when an ordinary response is more believable.
-12. The world should feel alive and unpredictable.
-13. The player can use natural language to describe actions.
-14. Interpret the player's action reasonably while preserving their agency.
+1. The player controls only their own actions and intentions.
 
-Generate the next meaningful moment.
+2. The player does NOT control other people's reactions.
+
+3. Other people have their own agency, motivations, boundaries, moods,
+   schedules, relationships, and incomplete information.
+
+4. The world follows realistic physical, social, cultural, legal,
+   financial, and temporal rules.
+
+5. Never guarantee the player's desired outcome.
+
+6. Uncertainty is part of the experience.
+
+7. The selected Journey theme affects emotional tone and atmosphere,
+   NOT the guaranteed outcome.
+
+8. Intensity affects how emotionally or situationally significant
+   moments may feel, but does not force dramatic events.
+
+9. Tempo affects story density:
+   - Slow: allow more sensory detail and small moments.
+   - Normal: balanced pacing.
+   - Fast: skip uneventful moments and move forward efficiently.
+
+10. Every meaningful player action should move the world forward.
+
+11. Preserve continuity.
+
+12. Do not reset the world.
+
+13. Remember people, locations, relationships, events,
+    unresolved threads, and consequences from the current world state.
+
+14. Do not force drama when an ordinary response is more believable.
+
+15. Natural language actions are always allowed.
+
+16. Interpret the player's action reasonably while preserving
+    what the player actually chose.
+
+17. Do not narrate thoughts, feelings, or intentions for the player
+    unless the player explicitly stated them.
+
+18. Do not make every moment special.
+    Ordinary moments are important too.
+
+19. The world should contain small unexpected details,
+    but avoid artificial twists.
+
+20. Generate the next meaningful moment, not an entire chapter.
+
+--------------------------------------------------
+VISUAL / READING STYLE
+--------------------------------------------------
+
+The response will be displayed as a structured interactive scene.
+
+Keep each section short and visually clear.
+
+ENVIRONMENT:
+1–2 short sentences.
+Describe only the physical surroundings, atmosphere, weather,
+sounds, movement, or sensory details that matter now.
+
+EVENT:
+1–2 short sentences.
+Describe what has changed or what is happening now.
+
+PEOPLE:
+When a person is relevant, describe them briefly.
+Their description should be visually useful:
+clothing, approximate age, expression, posture, or another
+distinctive detail.
+
+DIALOGUE:
+Use short, natural dialogue.
+Usually one or two sentences.
+
+Do NOT write long paragraphs.
+
+Do NOT repeat information already obvious from the world state.
+
+Do NOT turn every response into a dramatic scene.
+
+--------------------------------------------------
+PEOPLE AND VISUAL MEMORY
+--------------------------------------------------
+
+The world should distinguish between ordinary moments
+and moments worth remembering.
+
+Set shouldGenerateImage = true ONLY when:
+
+- an important person is being introduced for the first time, OR
+- a genuinely memorable visual moment occurs.
+
+Otherwise:
+
+shouldGenerateImage = false
+imageType = "none"
+
+If an important new person is introduced:
+
+imageType = "character"
+
+If a genuinely memorable visual moment should be preserved:
+
+imageType = "memory"
+
+Do not generate images for ordinary movement,
+routine conversation, or every scene.
+
+The principle is:
+
+"The world doesn't need to be illustrated.
+People and memories do."
+
+--------------------------------------------------
+WORLD STATE
+--------------------------------------------------
+
+Update the world state whenever something meaningful changes.
+
+Preserve:
+
+- current time
+- current location
+- people
+- relationships
+- events
+- unresolved threads
+- important consequences
+- player information
+- journey settings
+
+Do not erase existing information merely because it is not
+mentioned in the current scene.
+
+--------------------------------------------------
+CHOICES
+--------------------------------------------------
+
+Provide 2–4 plausible choices.
+
+Choices should represent genuinely different actions.
+
+Do not make one choice obviously correct.
+
+Do not guarantee outcomes.
+
+The player may always ignore these choices and type
+their own action in natural language.
+
+--------------------------------------------------
+MEMORY
+--------------------------------------------------
+
+Set memoryMoment = true only when this moment could reasonably
+become a meaningful memory of the journey.
+
+Most ordinary moments should have memoryMoment = false.
+
+--------------------------------------------------
+OUTPUT
+--------------------------------------------------
 
 Return ONLY the structured JSON requested by the schema.
 `;
 
+    // =====================================================
+    // USER PROMPT
+    // =====================================================
+
     const userPrompt = `
 PLAYER ACTION:
+
 ${playerAction}
 
+
 CURRENT WORLD STATE:
+
 ${JSON.stringify(worldState || {}, null, 2)}
 
-Generate the next moment in the world.
+
+Generate the next meaningful moment.
+
+Preserve continuity with the existing world.
+
+Do not restart the journey.
+
+Return a concise, visually structured moment.
 `;
+
+    // =====================================================
+    // OPENAI REQUEST
+    // =====================================================
 
     const response = await fetch(
       "https://api.openai.com/v1/responses",
@@ -108,22 +289,52 @@ Generate the next moment in the world.
                 additionalProperties: false,
 
                 properties: {
-                  scene: {
+
+                  // -------------------------------------
+                  // SCENE TITLE
+                  // -------------------------------------
+
+                  sceneTitle: {
                     type: "string"
                   },
 
-                  choices: {
-                    type: "array",
-                    items: {
-                      type: "string"
-                    }
-                  },
+                  // -------------------------------------
+                  // TIME
+                  // -------------------------------------
 
-                  worldState: {
+                  time: {
                     type: "string"
                   },
 
-                  importantPeople: {
+                  // -------------------------------------
+                  // LOCATION
+                  // -------------------------------------
+
+                  location: {
+                    type: "string"
+                  },
+
+                  // -------------------------------------
+                  // ENVIRONMENT
+                  // -------------------------------------
+
+                  environment: {
+                    type: "string"
+                  },
+
+                  // -------------------------------------
+                  // EVENT
+                  // -------------------------------------
+
+                  event: {
+                    type: "string"
+                  },
+
+                  // -------------------------------------
+                  // PEOPLE
+                  // -------------------------------------
+
+                  people: {
                     type: "array",
 
                     items: {
@@ -132,47 +343,139 @@ Generate the next moment in the world.
                       additionalProperties: false,
 
                       properties: {
+
                         name: {
                           type: "string"
                         },
 
                         description: {
                           type: "string"
+                        },
+
+                        dialogue: {
+                          type: "string"
                         }
+
                       },
 
                       required: [
                         "name",
-                        "description"
+                        "description",
+                        "dialogue"
                       ]
                     }
                   },
 
+                  // -------------------------------------
+                  // GENERAL DIALOGUE FALLBACK
+                  // -------------------------------------
+
+                  dialogue: {
+                    type: "object",
+
+                    additionalProperties: false,
+
+                    properties: {
+
+                      speaker: {
+                        type: "string"
+                      },
+
+                      text: {
+                        type: "string"
+                      }
+
+                    },
+
+                    required: [
+                      "speaker",
+                      "text"
+                    ]
+                  },
+
+                  // -------------------------------------
+                  // PLAYER CHOICES
+                  // -------------------------------------
+
+                  choices: {
+                    type: "array",
+
+                    items: {
+                      type: "string"
+                    }
+                  },
+
+                  // -------------------------------------
+                  // WORLD STATE
+                  // -------------------------------------
+
+                  worldState: {
+                    type: "string"
+                  },
+
+                  // -------------------------------------
+                  // IMAGE SIGNAL
+                  // -------------------------------------
+
+                  shouldGenerateImage: {
+                    type: "boolean"
+                  },
+
+                  imageType: {
+                    type: "string",
+
+                    enum: [
+                      "none",
+                      "character",
+                      "memory"
+                    ]
+                  },
+
+                  // -------------------------------------
+                  // MEMORY
+                  // -------------------------------------
+
                   memoryMoment: {
                     type: "boolean"
                   }
+
                 },
 
                 required: [
-                  "scene",
+                  "sceneTitle",
+                  "time",
+                  "location",
+                  "environment",
+                  "event",
+                  "people",
+                  "dialogue",
                   "choices",
                   "worldState",
-                  "importantPeople",
+                  "shouldGenerateImage",
+                  "imageType",
                   "memoryMoment"
                 ]
               }
             }
           },
 
-          max_output_tokens: 900
+          max_output_tokens: 1200
         })
       }
     );
 
+    // =====================================================
+    // RESPONSE
+    // =====================================================
+
     const data = await response.json();
 
-    // OpenAI error
+    // -----------------------------------------------------
+    // OPENAI ERROR
+    // -----------------------------------------------------
+
     if (!response.ok) {
+
       console.error("OpenAI error:", data);
 
       return res.status(response.status).json({
@@ -181,26 +484,41 @@ Generate the next moment in the world.
       });
     }
 
-    // Get model output
+    // =====================================================
+    // GET MODEL OUTPUT
+    // =====================================================
+
     let text = data.output_text || "";
 
     // Fallback extraction
     if (!text && Array.isArray(data.output)) {
+
       for (const item of data.output) {
-        if (!Array.isArray(item.content)) continue;
+
+        if (!Array.isArray(item.content)) {
+          continue;
+        }
 
         for (const content of item.content) {
+
           if (
             content.type === "output_text" &&
             content.text
           ) {
+
             text += content.text;
+
           }
         }
       }
     }
 
+    // =====================================================
+    // NO OUTPUT
+    // =====================================================
+
     if (!text) {
+
       console.error("No model output:", data);
 
       return res.status(500).json({
@@ -209,12 +527,18 @@ Generate the next moment in the world.
       });
     }
 
-    // Parse JSON
+    // =====================================================
+    // PARSE JSON
+    // =====================================================
+
     let result;
 
     try {
+
       result = JSON.parse(text);
+
     } catch (error) {
+
       console.error("Invalid JSON:", text);
 
       return res.status(500).json({
@@ -224,17 +548,63 @@ Generate the next moment in the world.
       });
     }
 
-    // Convert worldState back into an object
+    // =====================================================
+    // CONVERT WORLD STATE BACK INTO OBJECT
+    // =====================================================
+
     if (typeof result.worldState === "string") {
+
       try {
-        result.worldState = JSON.parse(result.worldState);
+
+        result.worldState =
+          JSON.parse(result.worldState);
+
       } catch (error) {
-        console.error("worldState parsing failed:", result.worldState);
+
+        console.error(
+          "worldState parsing failed:",
+          result.worldState
+        );
+
         result.worldState = {};
       }
     }
 
-    // Return result
+    // =====================================================
+    // SAFETY DEFAULTS
+    // =====================================================
+
+    if (!Array.isArray(result.people)) {
+      result.people = [];
+    }
+
+    if (!Array.isArray(result.choices)) {
+      result.choices = [];
+    }
+
+    if (!result.dialogue) {
+      result.dialogue = {
+        speaker: "",
+        text: ""
+      };
+    }
+
+    if (
+      result.imageType !== "character" &&
+      result.imageType !== "memory" &&
+      result.imageType !== "none"
+    ) {
+      result.imageType = "none";
+    }
+
+    if (result.imageType === "none") {
+      result.shouldGenerateImage = false;
+    }
+
+    // =====================================================
+    // RETURN
+    // =====================================================
+
     return res.status(200).json({
       ok: true,
       ...result,
@@ -242,11 +612,17 @@ Generate the next moment in the world.
     });
 
   } catch (error) {
-    console.error("World Engine error:", error);
+
+    console.error(
+      "World Engine error:",
+      error
+    );
 
     return res.status(500).json({
       ok: false,
-      error: error.message || "Unknown server error"
+      error:
+        error.message ||
+        "Unknown server error"
     });
   }
 }
