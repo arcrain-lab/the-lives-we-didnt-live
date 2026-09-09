@@ -1715,8 +1715,55 @@ function renderWorldResponse(data) {
         );
 
     }
+        // -----------------------------------------
+    // FREE-FORM ACTION
+    // -----------------------------------------
 
+    html += `
 
+        <div class="world-label free-action-label">
+            OR DO SOMETHING ELSE
+        </div>
+
+        <input
+            class="free-input"
+            id="freeAction"
+            placeholder="Tell the world what you want to do..."
+        >
+
+        <button
+            class="choice"
+            onclick="freeAction()"
+        >
+            → Do it
+        </button>
+
+        <button
+            class="choice"
+            onclick="sendAction(
+                'I stay here for a while and simply observe what happens.'
+            )"
+        >
+            Stay and observe.
+        </button>
+
+        <button
+            class="choice"
+            onclick="finishJourney()"
+        >
+            End this journey.
+        </button>
+
+    `;
+
+    // -----------------------------------------
+    // RENDER CHOICES
+    // -----------------------------------------
+
+    choices.innerHTML = html;
+
+}
+    
 function handleChoice(index) {
 
     const choices =
