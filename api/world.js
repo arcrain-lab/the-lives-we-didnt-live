@@ -175,6 +175,26 @@ If a genuinely memorable visual moment should be preserved:
 
 imageType = "memory"
 
+IMAGE PROMPT:
+
+If imageType = "none":
+    imagePrompt = ""
+
+If imageType = "character":
+    Write a concise visual description for an image-generation model.
+    Describe the person's approximate age, appearance, hair, clothing,
+    posture, expression, and relevant surroundings.
+    Focus on visually observable details.
+    Do not describe their thoughts or personality abstractly.
+
+If imageType = "memory":
+    Write a concise visual description of the memorable moment.
+    Describe the setting, people, composition, lighting, atmosphere,
+    and important visual details.
+
+The imagePrompt should be concise and visually specific.
+Do not write a story or dialogue inside imagePrompt.
+
 Do not generate images for ordinary movement,
 routine conversation, or every scene.
 
@@ -437,14 +457,18 @@ Return a concise, visually structured moment.
                     type: "boolean"
                   },
 
-                  imageType: {
+                 imageType: {
                     type: "string",
-
+                  
                     enum: [
                       "none",
                       "character",
                       "memory"
                     ]
+                  },
+                  
+                  imagePrompt: {
+                    type: "string"
                   },
 
                   // -------------------------------------
@@ -469,6 +493,7 @@ Return a concise, visually structured moment.
                   "worldState",
                   "shouldGenerateImage",
                   "imageType",
+                  "imagePrompt",
                   "memoryMoment"
                 ]
               }
@@ -615,6 +640,7 @@ Return a concise, visually structured moment.
 
     if (result.imageType === "none") {
       result.shouldGenerateImage = false;
+      result.imagePrompt = "";
     }
 
     // =====================================================
