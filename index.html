@@ -10,19 +10,33 @@
 
 html, body {
     margin: 0;
-    padding: 0;
-    width: 100%;
+    min-height: 100%;
 }
 
 body {
-    min-height: 100vh;
-    padding: 40px
     background: #11110f;
     color: #f2eee6;
     font-family: Georgia, "Times New Roman", serif;
 }
 
 button, input, select { font-family: inherit; }
+
+.app {
+    width: 100%;
+    min-height: 100vh;
+    display: block;
+    padding: 24px;
+}
+
+.screen {
+    width: min(760px, 100%);
+    min-height: 680px;
+    margin: 0 auto;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 36px;
+}
 
 .screen.active { display: flex; }
 
@@ -207,49 +221,34 @@ button, input, select { font-family: inherit; }
 
 .screen.world.active { display: block; }
 
-/* ---------- WORLD: TRUE THREE-COLUMN LAYOUT ---------- */
+/* The ONLY three-column layout rule */
 
-.screen.world {
-    width: calc(100vw - 48px) !important;
-    max-width: 1500px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    display: none;
+.world-layout {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+
+    gap: 32px !important;
+    align-items: flex-start !important;
 }
-
-.screen.world.active {
-    display: block !important;
-}
-
-.screen.world .world-layout {
-    width: 100% !important;
-    max-width: 1440px !important;
-    margin: 0 auto !important;
-
-    display: grid !important;
-    grid-template-columns: 260px minmax(0, 1fr) 260px !important;
-    column-gap: 32px !important;
-    row-gap: 0 !important;
-    align-items: start !important;
-}
-
-.screen.world .world-left {
-    grid-column: 1 !important;
-    width: 260px !important;
-    min-width: 0 !important;
-}
-
-.screen.world .world-center {
-    grid-column: 2 !important;
-    width: 100% !important;
-    min-width: 0 !important;
-}
-
-.screen.world .world-right {
-    grid-column: 3 !important;
-    width: 260px !important;
-    min-width: 0 !important;
-}
+    .world-left {
+        flex: 0 0 260px !important;
+        width: 260px !important;
+    }
+    
+    .world-center {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    
+    .world-right {
+        flex: 0 0 260px !important;
+        width: 260px !important;
+    }
 
 /* LEFT / RIGHT */
 
@@ -535,28 +534,18 @@ button, input, select { font-family: inherit; }
 
 /* ---------- RESPONSIVE ---------- */
 
-@media (max-width: 700px) {
+@media (max-width: 950px) {
     .app { padding: 12px; }
 
     .screen.world {
-        width: 100% !important;
-        max-width: 100% !important;
+        width: 100%;
+        max-width: 100%;
         padding: 25px 12px 50px;
     }
 
-    .screen.world .world-layout {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        column-gap: 0 !important;
-        row-gap: 25px !important;
-    }
-
-    .screen.world .world-left,
-    .screen.world .world-center,
-    .screen.world .world-right {
-        grid-column: 1 !important;
-        width: 100% !important;
-        min-width: 0 !important;
+    .world-layout {
+        grid-template-columns: 1fr;
+        gap: 25px;
     }
 
     .world-side {
@@ -596,6 +585,65 @@ button, input, select { font-family: inherit; }
     }
 
     .story-panel { padding: 22px; }
+}
+</style>
+
+<style id="FINAL_WORLD_LAYOUT_OVERRIDE">
+/* FINAL WORLD LAYOUT — appended last so it wins over earlier rules */
+@media (min-width: 901px) {
+  html body .app .screen.world.active {
+    display: block !important;
+    width: 100% !important;
+    max-width: 1500px !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 30px !important;
+    padding-right: 30px !important;
+  }
+
+  html body .app .screen.world.active .world-layout {
+    display: grid !important;
+    grid-template-columns: 260px minmax(0, 1fr) 260px !important;
+    grid-template-rows: auto !important;
+    column-gap: 32px !important;
+    row-gap: 0 !important;
+    width: 100% !important;
+    max-width: 1440px !important;
+    min-width: 0 !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    flex-direction: initial !important;
+    flex-wrap: nowrap !important;
+    align-items: start !important;
+  }
+
+  html body .app .screen.world.active .world-layout > .world-left {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    margin: 0 !important;
+  }
+
+  html body .app .screen.world.active .world-layout > .world-center {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  html body .app .screen.world.active .world-layout > .world-right {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    margin: 0 !important;
+  }
 }
 </style>
 </head>
@@ -785,10 +833,10 @@ button, input, select { font-family: inherit; }
 
 <section id="world" class="screen world">
 
-    <div class="world-layout">
+    <div class="world-layout" style="display:grid;grid-template-columns:260px minmax(0,1fr) 260px;column-gap:32px;row-gap:0;align-items:start;width:100%;max-width:1440px;margin:0 auto;">
 
         <!-- LEFT: CHARACTER -->
-<aside class="world-side world-left">
+<aside class="world-side world-left" style="grid-column:1;width:260px;min-width:0;">
 
     <div class="side-title">
         CHARACTER
@@ -814,9 +862,11 @@ button, input, select { font-family: inherit; }
 
     </div>
 
+</aside>
+
         <!-- CENTER: STORY -->
 <!-- CENTER: WORLD + STORY -->
-<main class="world-center">
+<main class="world-center" style="grid-column:2;width:100%;min-width:0;">
 
     <!-- =========================
          ENVIRONMENT HERO
@@ -932,7 +982,7 @@ button, input, select { font-family: inherit; }
 </main>
 
         <!-- RIGHT: MEMORY -->
-      <aside class="world-side world-right">
+      <aside class="world-side world-right" style="grid-column:3;width:260px;min-width:0;">
 
     <div class="side-title">
         MEMORY
