@@ -687,7 +687,28 @@ Return a concise, visually structured moment.
                     {
                       type: "input_text",
                       text:
-                        `Generate an image based on this visual description:\n\n${result.imagePrompt}`
+                        `Generate this image as a cinematic graphic-novel / illustrated comic panel.
+                      
+                      Style:
+                      - hand-drawn comic illustration
+                      - clean expressive linework
+                      - painterly shading
+                      - soft cinematic lighting
+                      - realistic but slightly stylized human proportions
+                      - warm atmospheric storytelling
+                      - detailed facial expressions
+                      - consistent visual identity across the story
+                      
+                      Important:
+                      - Do NOT make it look like a photograph.
+                      - Do NOT use photorealistic skin texture.
+                      - Do NOT create 3D-rendered characters.
+                      - Do NOT include text, captions, speech bubbles, logos, or watermarks.
+                      - The image should feel like a frame from the same illustrated graphic novel.
+                      
+                      Scene description:
+                      
+                      ${result.imagePrompt}`
                     }
                   ]
                 }
