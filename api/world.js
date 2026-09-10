@@ -658,9 +658,10 @@ Return a concise, visually structured moment.
     let imageData = null;
 
     if (
-      result.shouldGenerateImage === true &&
-      result.imageType === "character" &&
-      result.imagePrompt
+        result.shouldGenerateImage === true &&
+        (result.imageType === "character" ||
+         result.imageType === "memory") &&
+        result.imagePrompt
     ) {
       console.log("Generating character image...");
 
