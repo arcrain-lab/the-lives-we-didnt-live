@@ -1541,6 +1541,12 @@ async function sendAction(action) {
 // =====================================================
 
 function renderWorldResponse(data) {
+   
+    console.log("IMAGE DEBUG:", {
+        shouldGenerateImage: data.shouldGenerateImage,
+        imageType: data.imageType,
+        imagePrompt: data.imagePrompt
+    });
 
     // -----------------------------------------
     // Store current choices
