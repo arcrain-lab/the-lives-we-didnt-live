@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -221,34 +221,38 @@ button, input, select { font-family: inherit; }
 
 .screen.world.active { display: block; }
 
-/* The ONLY three-column layout rule */
+/* ---------- WORLD: DESKTOP THREE-COLUMN LAYOUT ---------- */
 
 .world-layout {
-    width: 100%;
-    max-width: 1440px;
-    margin: 0 auto;
-    display: flex;
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin: 0 auto !important;
+
+    display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-
-    gap: 32px !important;
     align-items: flex-start !important;
+    gap: 32px !important;
 }
-    .world-left {
-        flex: 0 0 260px !important;
-        width: 260px !important;
-    }
-    
-    .world-center {
-        flex: 1 1 auto !important;
-        width: auto !important;
-        min-width: 0 !important;
-    }
-    
-    .world-right {
-        flex: 0 0 260px !important;
-        width: 260px !important;
-    }
+
+.world-left {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    max-width: 260px !important;
+}
+
+.world-center {
+    flex: 1 1 0% !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.world-right {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    max-width: 260px !important;
+}
 
 /* LEFT / RIGHT */
 
@@ -534,7 +538,7 @@ button, input, select { font-family: inherit; }
 
 /* ---------- RESPONSIVE ---------- */
 
-@media (max-width: 950px) {
+@media (max-width: 700px) {
     .app { padding: 12px; }
 
     .screen.world {
@@ -544,8 +548,18 @@ button, input, select { font-family: inherit; }
     }
 
     .world-layout {
-        grid-template-columns: 1fr;
-        gap: 25px;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        gap: 25px !important;
+    }
+
+    .world-left,
+    .world-center,
+    .world-right {
+        flex: none !important;
+        width: 100% !important;
+        max-width: none !important;
     }
 
     .world-side {
