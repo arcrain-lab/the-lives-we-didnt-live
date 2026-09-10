@@ -1073,11 +1073,6 @@ button, input, select { font-family: inherit; }
         </div>
 
         <div class="state-row">
-            <span>Reputation</span>
-            <span id="stateReputation">0</span>
-        </div>
-
-        <div class="state-row">
             <span>Known People</span>
             <span id="statePeople">0</span>
         </div>
@@ -1158,7 +1153,8 @@ let worldState = {
     location: "Boston",
     people: [],
     events: [],
-    openThreads: []
+    openThreads: [],
+    money: 200
 };
 
 let journeyHistory = [];
@@ -1362,6 +1358,7 @@ function enterBoston() {
         people: [],
         events: [],
         openThreads: [],
+        money: 200,
         player: {
             name: playerName
         },
@@ -1375,6 +1372,11 @@ function enterBoston() {
     // Clear previous journey
     journeyHistory = [];
     knownPeople = [];
+
+    const initialStateMoney = document.getElementById("stateMoney");
+    const initialStatePeople = document.getElementById("statePeople");
+    if (initialStateMoney) initialStateMoney.textContent = "$200";
+    if (initialStatePeople) initialStatePeople.textContent = "0";
 
 
     // -----------------------------------------
@@ -1955,6 +1957,37 @@ if (
                 `)
                 .join("");
         }
+    }
+
+    // -----------------------------------------
+    // UPDATE WORLD STATE PANEL
+    // -----------------------------------------
+
+    const stateLocation = document.getElementById("stateLocation");
+    const stateTime = document.getElementById("stateTime");
+    const stateMoney = document.getElementById("stateMoney");
+    const statePeople = document.getElementById("statePeople");
+
+    if (stateLocation) {
+        stateLocation.textContent = worldState.location || data.location || "Boston";
+    }
+
+    if (stateTime) {
+        stateTime.textContent = worldState.time || data.time || "—";
+    }
+
+    if (typeof data.worldState?.money === "number") {
+        worldState.money = data.worldState.money;
+    } else if (typeof data.money === "number") {
+        worldState.money = data.money;
+    }
+
+    if (stateMoney) {
+        stateMoney.textContent = `$${Number(worldState.money ?? 200).toLocaleString()}`;
+    }
+
+    if (statePeople) {
+        statePeople.textContent = String(knownPeople.length);
     }
 
 
