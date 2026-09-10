@@ -465,14 +465,9 @@ Return a concise, visually structured moment.
                     type: "boolean"
                   },
 
-                 imageType: {
-                    type: "string",
-                  
-                    enum: [
-                      "none",
-                      "character",
-                      "memory"
-                    ]
+                  imageType: {
+                      type: "string",
+                      enum: ["none", "character", "memory", "environment"]
                   },
                   
                   imagePrompt: {
@@ -658,11 +653,12 @@ Return a concise, visually structured moment.
     let imageData = null;
 
     if (
-        result.shouldGenerateImage === true &&
-        (result.imageType === "character" ||
-         result.imageType === "memory") &&
-        result.imagePrompt
-    ) {
+    result.shouldGenerateImage === true &&
+    (result.imageType === "character" ||
+     result.imageType === "memory" ||
+     result.imageType === "environment") &&
+     result.imagePrompt
+    ){
       console.log("Generating character image...");
 
       try {
