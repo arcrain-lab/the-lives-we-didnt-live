@@ -891,9 +891,10 @@ Return a concise, visually structured moment.
       ok: true,
       ...result,
       imageData,
+      characterImageData,
+      environmentImageData,
       responseId: data.id
     });
-
   } catch (error) {
 
     console.error(
