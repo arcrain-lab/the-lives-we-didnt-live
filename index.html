@@ -251,10 +251,18 @@ button, input, select {
 .world-layout {
     width: 100%;
     display: grid;
-    grid-template-columns: 220px minmax(420px, 680px) 220px;
-    justify-content: center;
+
+    /*
+     * CHARACTER | WORLD + STORY | MEMORY
+     */
+    grid-template-columns:
+        minmax(280px, 320px)
+        minmax(600px, 1fr)
+        minmax(280px, 320px);
+
+    gap: 32px;
+
     align-items: start;
-    gap: 45px;
 }
 
 /* =========================================
@@ -746,34 +754,155 @@ button, input, select {
     <div class="world-layout">
 
         <!-- LEFT: CHARACTER -->
-        <aside class="world-side world-left">
+<aside class="world-side world-left">
 
-            <div class="world-side-placeholder">
-                CHARACTER
-            </div>
+    <div class="side-title">
+        CHARACTER
+    </div>
 
-            <img
-                id="characterImage"
-                class="world-side-image"
-                alt="Character"
-            >
+    <div class="character-card">
 
-        </aside>
+        <div class="world-side-placeholder">
+            CHARACTER
+        </div>
 
+        <img
+            id="characterImage"
+            class="world-side-image"
+            alt="Character"
+        >
+
+        <div
+            id="characterQuote"
+            class="character-quote"
+        >
+        </div>
+
+    </div>
+
+</aside>
+.side-title {
+    font-size: 20px;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
+}
+
+.character-card {
+    width: 100%;
+}
+
+.character-quote {
+    margin-top: 22px;
+
+    font-size: 18px;
+    line-height: 1.65;
+
+    font-style: italic;
+
+    opacity: .75;
+}
 
         <!-- CENTER: STORY -->
-        <main class="world-center">
+<!-- CENTER: WORLD + STORY -->
+<main class="world-center">
+
+    <!-- =========================
+         ENVIRONMENT HERO
+    ========================== -->
+    .environment-hero {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio: 16 / 9;
+
+    overflow: hidden;
+
+    border-radius: 2px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #17232b,
+            #0c1115
+        );
+
+    margin-bottom: 0;
+}
+
+.environment-image {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+}
+
+.environment-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(0,0,0,.05) 0%,
+            rgba(0,0,0,.08) 35%,
+            rgba(8,13,17,.82) 100%
+        );
+}
+
+.environment-content {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    padding: 30px 32px;
+}
+
+.environment-content .world-header {
+    margin-bottom: 18px;
+
+    opacity: .85;
+
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+.environment-content .scene-title {
+    margin: 0;
+
+    font-size: 38px;
+    line-height: 1.15;
+
+    font-weight: normal;
+}
+    <section class="environment-hero">
+
+        <img
+            id="environmentImage"
+            class="environment-image"
+            alt="Current environment"
+        >
+
+        <div class="environment-overlay"></div>
+
+        <div class="environment-content">
 
             <div class="world-header">
-
-                <span>BOSTON</span>
+                <span id="worldLocation">BOSTON</span>
 
                 <span id="worldTime">
                     Loading time...
                 </span>
-
             </div>
-
 
             <h2
                 class="scene-title"
@@ -781,6 +910,74 @@ button, input, select {
             >
                 The First Moment
             </h2>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         STORY
+    ========================== -->
+.story-panel {
+    padding: 30px 32px 45px;
+
+    background:
+        rgba(12, 18, 22, .55);
+
+    border-left: 1px solid rgba(255,255,255,.05);
+    border-right: 1px solid rgba(255,255,255,.05);
+}
+    <section class="story-panel">
+
+        <div
+            class="scene-text"
+            id="sceneText"
+        >
+
+            <div class="world-scene">
+
+                <div class="world-label">
+                    SOMETHING CHANGED
+                </div>
+
+                <div class="world-event">
+                    Boston is already awake.
+                    The city is beginning to move around you.
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CHOICES -->
+
+        <div
+            class="choice-area"
+            id="choices"
+        >
+        </div>
+
+
+        <div class="tempo-bar">
+            Your pace:
+            <span id="tempoDisplay">
+                Normal
+            </span>
+        </div>
+
+
+        <button
+            class="primary-btn"
+            onclick="finishJourney()"
+        >
+            End Journey
+        </button>
+
+    </section>
+
+</main>
 
 
             <div
@@ -857,24 +1054,110 @@ button, input, select {
 
 
         <!-- RIGHT: MEMORY -->
-        <aside class="world-side world-right">
+      <aside class="world-side world-right">
 
-            <div class="world-side-placeholder">
-                MEMORY
+    <div class="side-title">
+        MEMORY
+    </div>
+
+    <div class="memory-card">
+
+        <div class="world-side-placeholder">
+            <div>
+                Some moments<br>
+                stay with you.
             </div>
+        </div>
 
-            <img
-                id="memoryImage"
-                class="world-side-image"
-                alt="Memory"
-            >
+        <img
+            id="memoryImage"
+            class="world-side-image"
+            alt="Memory"
+        >
 
-        </aside>
+        <div
+            id="memoryCaption"
+            class="memory-caption"
+        >
+        </div>
 
     </div>
 
-</section>
+    <div class="world-state">
 
+        <div class="side-title">
+            WORLD STATE
+        </div>
+
+        <div class="state-row">
+            <span>Location</span>
+            <span id="stateLocation">Boston</span>
+        </div>
+
+        <div class="state-row">
+            <span>Time</span>
+            <span id="stateTime">Morning</span>
+        </div>
+
+        <div class="state-row">
+            <span>Money</span>
+            <span id="stateMoney">$200</span>
+        </div>
+
+        <div class="state-row">
+            <span>Reputation</span>
+            <span id="stateReputation">0</span>
+        </div>
+
+        <div class="state-row">
+            <span>Known People</span>
+            <span id="statePeople">0</span>
+        </div>
+
+    </div>
+
+</aside>
+.memory-card {
+    width: 100%;
+}
+
+.memory-caption {
+    margin-top: 18px;
+
+    font-size: 15px;
+    line-height: 1.6;
+
+    font-style: italic;
+
+    opacity: .65;
+}
+
+.world-state {
+    margin-top: 25px;
+
+    padding: 24px 20px;
+
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+}
+
+.state-row {
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid rgba(255,255,255,.05);
+
+    font-size: 14px;
+}
+
+.state-row span:first-child {
+    opacity: .55;
+}
 
 <!-- ================= ARCHIVE ================= -->
 
