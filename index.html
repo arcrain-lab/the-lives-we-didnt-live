@@ -265,6 +265,85 @@ button, input, select {
     align-items: start;
 }
 
+/* ===== WORLD CENTER ===== */
+
+.environment-hero {
+    position: relative;
+    width: 100%;
+    min-height: 420px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #eee;
+}
+
+.environment-image {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+}
+
+.environment-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.15),
+        rgba(0,0,0,0.45)
+    );
+}
+
+.environment-content {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 32px;
+    color: white;
+}
+
+.story-panel {
+    margin-top: 22px;
+    padding: 28px;
+    border-radius: 18px;
+    background: white;
+}
+
+.scene-text {
+    line-height: 1.8;
+}
+
+/* ===== MEMORY ===== */
+
+.memory-card {
+    overflow: hidden;
+}
+
+.memory-caption {
+    padding: 14px 4px 4px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #666;
+}
+
+.world-state {
+    margin-top: 24px;
+}
+
+.state-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.state-row:last-child {
+    border-bottom: none;
+}
+    
 /* =========================================
    SIDE PANELS
 ========================================= */
@@ -961,6 +1040,10 @@ button, input, select {
     </div>
 
 </aside>
+    
+</div> <!-- /.world-layout -->
+</section> <!-- /#world -->
+
 
 <!-- ================= ARCHIVE ================= -->
 
@@ -1023,6 +1106,7 @@ let selectedTheme = null;
 let playerName = "";
 let playerAge = "";
 let playerLanguage = "";
+let playerPhoto = "";
 
 let worldState = {
     time: "Saturday, 10:27 AM",
@@ -1077,6 +1161,7 @@ function previewPhoto(event) {
             document.getElementById("photoPreview");
 
         img.src = e.target.result;
+        playerPhoto = e.target.result;
         img.style.display = "inline-block";
     };
 
@@ -1176,7 +1261,20 @@ function enterBoston() {
     const tempo =
         getSetting("Tempo") || "Normal";
 
+    const characterImage =
+        document.getElementById("characterImage");
+    
+    if (characterImage && playerPhoto) {
+        characterImage.src = playerPhoto;
+        characterImage.style.display = "block";
+    }
+    const characterQuote =
+    document.getElementById("characterQuote");
 
+    if (characterQuote) {
+        characterQuote.textContent =
+        playerName + " — entering a life that could have been.";
+    }
     // -----------------------------------------
     // INITIAL WORLD STATE
     // -----------------------------------------
@@ -1206,7 +1304,7 @@ function enterBoston() {
         events: [],
         openThreads: [],
         player: {
-            name: "You"
+            name: playerName
         },
         journey: {
             theme: theme,
@@ -1232,7 +1330,30 @@ function enterBoston() {
     const choices =
         document.getElementById("choices");
 
-
+    // -----------------------------------------
+    // MEMORY IMAGE
+    // -----------------------------------------
+    
+    const memoryImage =
+        document.getElementById("memoryImage");
+    
+    const memoryCaption =
+        document.getElementById("memoryCaption");
+    
+    if (
+        memoryImage &&
+        data.memoryImageUrl
+    ) {
+        memoryImage.src = data.memoryImageUrl;
+        memoryImage.style.display = "block";
+    
+        if (memoryCaption) {
+            memoryCaption.textContent =
+                data.memoryCaption ||
+                "A moment worth remembering.";
+        }
+    }
+    
     if (sceneTitle) {
 
         sceneTitle.textContent =
@@ -1412,21 +1533,29 @@ async function sendAction(action) {
     // Send CURRENT WORLD + HISTORY to AI
     // -----------------------------------------
 
-    const requestBody = {
-
+     const requestBody = {
+    
         playerAction: action,
-
-        worldState: {
-
+    
+        player: {
+            name: playerName,
+            age: playerAge,
+            language: playerLanguage,
+            photo: playerPhoto
+        },
+    
+         memoryRequest: true,
+         
+         worldState: {
+    
             ...worldState,
-
+    
             journeyHistory:
                 journeyHistory.slice(-12)
-
+    
         }
-
+    
     };
-
 
     // -----------------------------------------
     // Ask World Engine
@@ -1633,6 +1762,18 @@ function renderWorldResponse(data) {
         imageType: data.imageType,
         imagePrompt: data.imagePrompt
     });
+
+// -----------------------------------------
+// ENVIRONMENT IMAGE
+// -----------------------------------------
+
+const environmentImage =
+    document.getElementById("environmentImage");
+
+if (environmentImage && data.imageUrl) {
+    environmentImage.src = data.imageUrl;
+    environmentImage.style.display = "block";
+}
 
     // -----------------------------------------
     // Store current choices
