@@ -1669,7 +1669,6 @@ async function sendAction(action) {
 
         renderWorldResponse(data);
 
-
     } catch (error) {
 
         console.error(error);
@@ -1758,6 +1757,9 @@ function renderWorldResponse(data) {
     
     const memoryImage =
         document.getElementById("memoryImage");
+
+    const environmentImage =
+        document.getElementById("environmentImage");
     
     const memoryCaption =
         document.getElementById("memoryCaption");
@@ -1800,6 +1802,16 @@ if (
                 "A moment worth remembering.";
         }
     }
+
+    // Environment
+        if (
+            data.imageData &&
+            data.imageType === "environment" &&
+            environmentImage
+        ) {
+            environmentImage.src = data.imageData;
+            environmentImage.style.display = "block";
+        }
         
     // -----------------------------------------
     // Store current choices
