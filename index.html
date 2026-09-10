@@ -1770,8 +1770,8 @@ function renderWorldResponse(data) {
 const environmentImage =
     document.getElementById("environmentImage");
 
-if (environmentImage && data.imageUrl) {
-    environmentImage.src = data.imageUrl;
+if (environmentImage && data.imageData) {
+    environmentImage.src = data.imageData;
     environmentImage.style.display = "block";
 }
 
