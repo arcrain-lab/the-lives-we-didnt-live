@@ -227,11 +227,28 @@ button, input, select { font-family: inherit; }
     width: 100%;
     max-width: 1440px;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: 260px minmax(0, 1fr) 260px;
-    gap: 32px;
-    align-items: start;
+    display: flex;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+
+    gap: 32px !important;
+    align-items: flex-start !important;
 }
+    .world-left {
+        flex: 0 0 260px !important;
+        width: 260px !important;
+    }
+    
+    .world-center {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    
+    .world-right {
+        flex: 0 0 260px !important;
+        width: 260px !important;
+    }
 
 /* LEFT / RIGHT */
 
