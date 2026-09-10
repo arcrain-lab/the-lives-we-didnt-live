@@ -655,9 +655,61 @@ Return a concise, visually structured moment.
     // RETURN
     // =====================================================
 
+   // =====================================================
+    // IMAGE GENERATION
+    // =====================================================
+    
+    let imageData = null;
+    
+    if (
+      result.shouldGenerateImage === true &&
+      result.imageType === "character" &&
+      result.imagePrompt
+    ) {
+      console.log("Generating character image...");
+    
+      try {
+        const imageResponse = await fetch(
+          "https://api.openai.com/v1/images/generations",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "gpt-image-2",
+              prompt: result.imagePrompt,
+              size: "1024x1024"
+            })
+          }
+        );
+    
+        const imageResult = await imageResponse.json();
+    
+        if (!imageResponse.ok) {
+          console.error("Image generation failed:", imageResult);
+        } else if (imageResult.data?.[0]?.b64_json) {
+          imageData =
+            `data:image/png;base64,${imageResult.data[0].b64_json}`;
+    
+          console.log("Character image generated successfully.");
+        }
+    
+      } catch (error) {
+        console.error("Image generation error:", error);
+      }
+    }
+    
+    
+    // =====================================================
+    // RETURN
+    // =====================================================
+    
     return res.status(200).json({
       ok: true,
       ...result,
+      imageData,
       responseId: data.id
     });
 
