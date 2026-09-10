@@ -169,27 +169,35 @@ Set shouldGenerateImage = true when:
 Do not generate images for ordinary movement,
 routine conversation, or every scene.
 
-For the first meaningful person the player encounters,
+IMAGE TYPE PRIORITY:
+
+When choosing imageType, prioritize people over environments.
+
+1. If the player is meeting, talking to, interacting with, or observing
+a meaningful person, use:
+
+imageType = "character"
+shouldGenerateImage = true
+
+This takes priority over environment.
+
+2. For the first meaningful person the player encounters,
 prefer imageType = "character" if the person is visually describable.
 
-Otherwise:
+3. If an important new person is introduced:
+imageType = "character"
+
+4. Use imageType = "memory" only when a genuinely memorable visual
+moment should be preserved.
+
+5. Use imageType = "environment" only when there is NO meaningful person
+being introduced or interacted with, and the current scene is being
+established by a new or visually distinctive place.
+
+6. Otherwise:
 
 shouldGenerateImage = false
 imageType = "none"
-
-If an important new person is introduced:
-
-imageType = "character"
-
-If a genuinely memorable visual moment should be preserved:
-
-imageType = "memory"
-
-If the current scene is being established by a new or visually distinctive place:
-
-imageType = "environment"
-
-For imageType = "environment":
 
 imagePrompt should describe the PLACE itself:
 - architecture
@@ -489,20 +497,29 @@ Return a concise, visually structured moment.
                   // -------------------------------------
                   // IMAGE SIGNAL
                   // -------------------------------------
-
-                  shouldGenerateImage: {
-                    type: "boolean"
-                  },
-
-                  imageType: {
-                      type: "string",
-                      enum: ["none", "character", "memory", "environment"]
-                  },
-                  
-                  imagePrompt: {
-                    type: "string"
-                  },
-
+                    shouldGenerateImage: {
+                      type: "boolean"
+                    },
+                    
+                    imageTypes: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                        enum: ["character", "memory", "environment"]
+                      }
+                    },
+                    
+                    imagePrompt: {
+                      type: "string"
+                    },
+                    
+                    characterImagePrompt: {
+                      type: "string"
+                    },
+                    
+                    environmentImagePrompt: {
+                      type: "string"
+                    },
                   // -------------------------------------
                   // MEMORY
                   // -------------------------------------
@@ -526,6 +543,8 @@ Return a concise, visually structured moment.
                   "shouldGenerateImage",
                   "imageType",
                   "imagePrompt",
+                  "characterImagePrompt",
+                  "environmentImagePrompt",
                   "memoryMoment"
                 ]
               }
@@ -662,142 +681,208 @@ Return a concise, visually structured moment.
       };
     }
 
-   if (
-      result.imageType !== "character" &&
-      result.imageType !== "memory" &&
-      result.imageType !== "environment" &&
-      result.imageType !== "none"
-    ) {
-      result.imageType = "none";
+    if (!Array.isArray(result.imageTypes)) {
+      result.imageTypes = [];
     }
-
-    if (result.imageType === "none") {
+    
+    result.imageTypes = result.imageTypes.filter(type =>
+      ["character", "memory", "environment"].includes(type)
+    );
+    
+    if (result.imageTypes.length === 0) {
       result.shouldGenerateImage = false;
       result.imagePrompt = "";
+      result.characterImagePrompt = "";
+      result.environmentImagePrompt = "";
+    } else {
+      result.shouldGenerateImage = true;
     }
-
     // =====================================================
     // IMAGE GENERATION
     // =====================================================
 
     let imageData = null;
-
+    let characterImageData = null;
+    let environmentImageData = null;
+    
     if (
-    result.shouldGenerateImage === true &&
-    (result.imageType === "character" ||
-     result.imageType === "memory" ||
-     result.imageType === "environment") &&
-     result.imagePrompt
-    ){
-    console.log(`Generating ${result.imageType} image...`);
-
-      try {
-        const imageResponse = await fetch(
-          "https://api.openai.com/v1/responses",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization":
-                `Bearer ${process.env.OPENAI_API_KEY}`
-            },
-
-            body: JSON.stringify({
-              model: "gpt-5.6-luna",
-
-              input: [
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "input_text",
-                      text:
-                        `Generate this image as a cinematic graphic-novel / illustrated comic panel.
-                      
-                      Style:
-                      - hand-drawn comic illustration
-                      - clean expressive linework
-                      - painterly shading
-                      - soft cinematic lighting
-                      - realistic but slightly stylized human proportions
-                      - warm atmospheric storytelling
-                      - detailed facial expressions
-                      - consistent visual identity across the story
-                      
-                      Important:
-                      - Do NOT make it look like a photograph.
-                      - Do NOT use photorealistic skin texture.
-                      - Do NOT create 3D-rendered characters.
-                      - Do NOT include text, captions, speech bubbles, logos, or watermarks.
-                      - The image should feel like a frame from the same illustrated graphic novel.
-                      
-                      Scene description:
-                      
-                      ${result.imagePrompt}`
-                    }
-                  ]
-                }
-              ],
-
-              tools: [
-                {
-                  type: "image_generation",
-                  model: "gpt-image-2",
-                  size: "1024x1024",
-                  quality: "medium"
-                }
-              ]
-            })
-          }
-        );
-
-        const imageResult =
-          await imageResponse.json();
-
-        if (!imageResponse.ok) {
-
-          console.error(
-            "Image generation failed:",
-            imageResult
+      result.shouldGenerateImage === true &&
+      Array.isArray(result.imageTypes) &&
+      result.imageTypes.length > 0
+    ) {
+    
+      const imageJobs = [];
+    
+      if (
+        result.imageTypes.includes("character") &&
+        result.characterImagePrompt
+      ) {
+        imageJobs.push({
+          type: "character",
+          prompt: result.characterImagePrompt
+        });
+      }
+    
+      if (
+        result.imageTypes.includes("environment") &&
+        result.environmentImagePrompt
+      ) {
+        imageJobs.push({
+          type: "environment",
+          prompt: result.environmentImagePrompt
+        });
+      }
+    
+      if (
+        result.imageTypes.includes("memory") &&
+        result.imagePrompt
+      ) {
+        imageJobs.push({
+          type: "memory",
+          prompt: result.imagePrompt
+        });
+      }
+    
+      const generateImage = async (job) => {
+    
+        console.log(`Generating ${job.type} image...`);
+    
+        try {
+    
+          const imageResponse = await fetch(
+            "https://api.openai.com/v1/responses",
+            {
+              method: "POST",
+    
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization":
+                  `Bearer ${process.env.OPENAI_API_KEY}`
+              },
+    
+              body: JSON.stringify({
+                model: "gpt-5.6-luna",
+    
+                input: [
+                  {
+                    role: "user",
+                    content: [
+                      {
+                        type: "input_text",
+                        text:
+                          `Generate this image as a cinematic graphic-novel / illustrated comic panel.
+    
+    Style:
+    - hand-drawn comic illustration
+    - clean expressive linework
+    - painterly shading
+    - soft cinematic lighting
+    - realistic but slightly stylized human proportions
+    - warm atmospheric storytelling
+    - detailed facial expressions
+    - consistent visual identity across the story
+    
+    Important:
+    - Do NOT make it look like a photograph.
+    - Do NOT use photorealistic skin texture.
+    - Do NOT create 3D-rendered characters.
+    - Do NOT include text, captions, speech bubbles, logos, or watermarks.
+    - The image should feel like a frame from the same illustrated graphic novel.
+    
+    Scene description:
+    
+    ${job.prompt}`
+                      }
+                    ]
+                  }
+                ],
+    
+                tools: [
+                  {
+                    type: "image_generation",
+                    model: "gpt-image-2",
+                    size: "1024x1024",
+                    quality: "medium"
+                  }
+                ]
+              })
+            }
           );
-
-        } else {
-
+    
+          const imageResult =
+            await imageResponse.json();
+    
+          if (!imageResponse.ok) {
+    
+            console.error(
+              `${job.type} image generation failed:`,
+              imageResult
+            );
+    
+            return null;
+          }
+    
           const imageCall =
             imageResult.output?.find(
               item =>
                 item.type ===
                 "image_generation_call"
             );
-
-          if (imageCall?.result) {
-
-            imageData =
-              `data:image/png;base64,${imageCall.result}`;
-
-            console.log(
-              `${result.imageType} image generated successfully.`
-            );
-
-          } else {
-
-            console.error(
-              "No image result returned:",
-              imageResult
-            );
-          }
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Image generation error:",
-          error
-        );
-      }
-    }
     
+          if (imageCall?.result) {
+    
+            console.log(
+              `${job.type} image generated successfully.`
+            );
+    
+            return `data:image/png;base64,${imageCall.result}`;
+    
+          }
+    
+          console.error(
+            `No ${job.type} image result returned:`,
+            imageResult
+          );
+    
+          return null;
+    
+        } catch (error) {
+    
+          console.error(
+            `${job.type} image generation error:`,
+            error
+          );
+    
+          return null;
+        }
+      };
+    
+      const generatedImages =
+        await Promise.all(
+          imageJobs.map(job => generateImage(job))
+        );
+    
+      imageJobs.forEach((job, index) => {
+    
+        const generated =
+          generatedImages[index];
+    
+        if (!generated) return;
+    
+        if (job.type === "character") {
+          characterImageData = generated;
+        }
+    
+        if (job.type === "environment") {
+          environmentImageData = generated;
+        }
+    
+        if (job.type === "memory") {
+          imageData = generated;
+        }
+      });
+    }
+
     // =====================================================
     // RETURN
     // =====================================================
