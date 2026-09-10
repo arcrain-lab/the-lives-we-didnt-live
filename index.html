@@ -1762,23 +1762,23 @@ function renderWorldResponse(data) {
     const memoryCaption =
         document.getElementById("memoryCaption");
     
-       // Character
-    if (
-        data.imageData &&
-        data.imageType === "character" &&
-        characterImage
-    ) {
-        characterImage.src = data.imageData;
-        characterImage.style.display = "block";
-    
-        const characterPlaceholder =
-            document.querySelector(".world-left .world-side-placeholder");
-    
-        if (characterPlaceholder) {
-            characterPlaceholder.style.display = "none";
-        }
+     // Character
+if (
+    data.imageData &&
+    data.imageType === "character" &&
+    characterImage
+) {
+    characterImage.src = data.imageData;
+    characterImage.style.display = "block";
+
+    const characterPlaceholder =
+        document.querySelector(".world-left .world-side-placeholder");
+
+    if (characterPlaceholder) {
+        characterPlaceholder.style.display = "none";
     }
-    
+}
+
     // Memory
     if (
         data.imageData &&
@@ -1800,7 +1800,7 @@ function renderWorldResponse(data) {
                 "A moment worth remembering.";
         }
     }
-    
+        
     // -----------------------------------------
     // Store current choices
     // -----------------------------------------
