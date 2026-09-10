@@ -235,82 +235,250 @@ button, input, select {
 }
 
 /* ---------- WORLD ---------- */
+/* =========================================
+   WORLD — THREE COLUMN LAYOUT
+========================================= */
 
 .world {
+    width: 100%;
+    max-width: 1400px;
     justify-content: flex-start;
+    padding: 40px 30px 70px;
+}
+
+/* Main three-column structure */
+
+.world-layout {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 220px minmax(420px, 680px) 220px;
+    justify-content: center;
+    align-items: start;
+    gap: 45px;
+}
+
+/* =========================================
+   SIDE PANELS
+========================================= */
+
+.world-side {
+    position: sticky;
+    top: 35px;
+    min-height: 260px;
+}
+
+.world-side-image {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 14px;
+    display: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.world-side-placeholder {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border: 1px dashed rgba(255,255,255,0.18);
+    border-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: rgba(255,255,255,0.25);
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+/* =========================================
+   CENTER STORY
+========================================= */
+
+.world-center {
+    width: 100%;
+    min-width: 0;
 }
 
 .world-header {
     display: flex;
     justify-content: space-between;
-    font-family: Arial, sans-serif;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    opacity: .5;
-    margin-bottom: 35px;
-}
+    align-items: center;
 
-.world-image {
-    width: 100%;
-    height: 290px;
-    object-fit: cover;
-    margin-bottom: 30px;
-    filter: brightness(.8);
+    margin-bottom: 28px;
+
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+
+    opacity: 0.55;
 }
 
 .scene-title {
+    margin: 0 0 28px;
+
     font-size: 32px;
-    font-weight: normal;
-    margin-bottom: 15px;
+    line-height: 1.25;
+    font-weight: 500;
 }
 
 .scene-text {
-    font-size: 18px;
-    line-height: 1.65;
-    opacity: .82;
+    width: 100%;
 }
 
+/* =========================================
+   STRUCTURED SCENE
+========================================= */
+
+.world-scene {
+    line-height: 1.75;
+}
+
+.world-label {
+    margin-bottom: 8px;
+
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+
+    opacity: 0.45;
+}
+
+.world-environment,
+.world-event {
+    margin-bottom: 24px;
+
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.world-divider {
+    height: 1px;
+    margin: 28px 0;
+
+    background: rgba(255,255,255,0.08);
+}
+
+.world-person {
+    margin-top: 28px;
+}
+
+.world-person-name {
+    margin-bottom: 6px;
+
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.world-person-description {
+    margin-bottom: 10px;
+
+    font-size: 14px;
+    opacity: 0.65;
+}
+
+.world-dialogue {
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+/* =========================================
+   CHOICES
+========================================= */
+
 .choice-area {
-    margin-top: 30px;
+    margin-top: 42px;
 }
 
 .choice {
-    display: block;
     width: 100%;
+    margin-bottom: 10px;
+    padding: 15px 18px;
+
     text-align: left;
-    padding: 15px;
-    margin-bottom: 8px;
-    border: 1px solid #3d3b37;
-    background: transparent;
-    color: #f2eee6;
+
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.10);
+
+    background: rgba(255,255,255,0.035);
+
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .choice:hover {
-    background: #22211e;
-    border-color: #77736b;
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
 }
 
 .free-input {
     width: 100%;
-    margin-top: 15px;
-    padding: 15px;
-    background: transparent;
-    border: 1px solid #44423e;
-    color: white;
-    font-size: 16px;
+    margin-top: 18px;
+    padding: 15px 18px;
+
+    box-sizing: border-box;
+
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.10);
+
+    background: rgba(255,255,255,0.035);
 }
 
+/* =========================================
+   TEMPO
+========================================= */
+
 .tempo-bar {
-    margin-top: 30px;
-    padding-top: 15px;
-    border-top: 1px solid #292824;
-    display: flex;
-    justify-content: space-between;
-    font-family: Arial, sans-serif;
-    font-size: 10px;
+    margin-top: 28px;
+
+    font-size: 11px;
     letter-spacing: 1px;
-    opacity: .45;
+
+    opacity: 0.4;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 950px) {
+
+    .world {
+        padding: 25px 18px 50px;
+    }
+
+    .world-layout {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .world-side {
+        position: static;
+        min-height: 0;
+    }
+
+    .world-side-placeholder {
+        display: none;
+    }
+
+    .world-side-image {
+        aspect-ratio: 16 / 9;
+    }
+
+    .world-left {
+        order: 1;
+    }
+
+    .world-center {
+        order: 2;
+    }
+
+    .world-right {
+        order: 3;
+    }
+
 }
 
 /* ---------- ARCHIVE ---------- */
@@ -569,79 +737,139 @@ button, input, select {
 
 <!-- ================= WORLD ================= -->
 
+<!-- ================= WORLD ================= -->
+
 <section id="world" class="screen world">
 
-    <div class="world-header">
-        <span>BOSTON</span>
-        <span>SATURDAY · 10:27 AM</span>
+    <div class="world-layout">
+
+        <!-- LEFT: CHARACTER -->
+        <aside class="world-side world-left">
+
+            <div class="world-side-placeholder">
+                CHARACTER
+            </div>
+
+            <img
+                id="characterImage"
+                class="world-side-image"
+                alt="Character"
+            >
+
+        </aside>
+
+
+        <!-- CENTER: STORY -->
+        <main class="world-center">
+
+            <div class="world-header">
+
+                <span>BOSTON</span>
+
+                <span id="worldTime">
+                    Loading time...
+                </span>
+
+            </div>
+
+
+            <h2
+                class="scene-title"
+                id="sceneTitle"
+            >
+                The First Moment
+            </h2>
+
+
+            <div
+                class="scene-text"
+                id="sceneText"
+            >
+
+                <div class="world-scene">
+
+                    <div class="world-label">
+                        ENVIRONMENT
+                    </div>
+
+                    <div class="world-environment">
+
+                        Boston is already awake.
+
+                        A small community market
+                        is beginning to fill the street.
+
+                    </div>
+
+
+                    <div class="world-divider"></div>
+
+
+                    <div class="world-label">
+                        SOMETHING CHANGED
+                    </div>
+
+                    <div class="world-event">
+
+                        Nothing seems particularly important
+                        yet.
+
+                        You simply have some time ahead of you.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CHOICES -->
+
+            <div
+                class="choice-area"
+                id="choices"
+            >
+            </div>
+
+
+            <!-- TEMPO -->
+
+            <div class="tempo-bar">
+
+                Your pace:
+                <span id="tempoDisplay">
+                    Normal
+                </span>
+
+            </div>
+
+
+            <button
+                class="primary-btn"
+                onclick="finishJourney()"
+            >
+                End Journey
+            </button>
+
+        </main>
+
+
+        <!-- RIGHT: MEMORY -->
+        <aside class="world-side world-right">
+
+            <div class="world-side-placeholder">
+                MEMORY
+            </div>
+
+            <img
+                id="memoryImage"
+                class="world-side-image"
+                alt="Memory"
+            >
+
+        </aside>
+
     </div>
-
-    <div class="world-image" id="worldImage"
-         style="background:
-         linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.35)),
-         url('https://images.unsplash.com/photo-1504274066651-8d31a536b11a?auto=format&fit=crop&w=1200&q=80')
-         center/cover;">
-    </div>
-
-    <h2 class="scene-title">The Saturday Morning</h2>
-
-    <div class="scene-text" id="sceneText">
-
-        You have no plans today.
-
-        <br><br>
-
-        Boston is already awake.
-
-        You walk outside without deciding where you're going.
-
-        A few blocks away, you notice a small community market
-        beginning to fill the street.
-
-        Nothing about it seems particularly important.
-
-        You could keep walking.
-
-        Or you could find out what's there.
-
-    </div>
-
-    <div class="choice-area" id="choices">
-
-        <button class="choice" onclick="nextScene('market')">
-            A. Go inside and look around.
-        </button>
-
-        <button class="choice" onclick="nextScene('coffee')">
-            B. Get a coffee first.
-        </button>
-
-        <button class="choice" onclick="nextScene('walk')">
-            C. Keep walking.
-        </button>
-
-        <button class="choice" onclick="nextScene('random')">
-            D. Choose a direction without thinking.
-        </button>
-
-        <input class="free-input"
-               id="freeAction"
-               placeholder="Or tell the world what you want to do...">
-
-        <button class="choice" onclick="freeAction()">
-            → Continue
-        </button>
-
-    </div>
-
-    <div class="tempo-bar">
-        <span>STORY TEMPO</span>
-        <span>Slow · Normal · Fast</span>
-    </div>
-
-    <button class="primary-btn" onclick="finishJourney()">
-        End Journey
-    </button>
 
 </section>
 
@@ -865,31 +1093,39 @@ function enterBoston() {
     // INITIAL WORLD STATE
     // -----------------------------------------
 
+    const now = new Date();
+    
+    const realTime = now.toLocaleString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/New_York"
+    });
+    
+    const worldTime = document.getElementById("worldTime");
+    
+    if (worldTime) {
+        worldTime.textContent = realTime;
+    }
+    
     worldState = {
-
-        time: "Saturday, 10:27 AM",
-
+        time: realTime,
         location: "Boston",
-
         people: [],
-
         events: [],
-
         openThreads: [],
-
         player: {
-            name: playerName,
-            age: playerAge,
-            language: playerLanguage
+            name: "You"
         },
-
         journey: {
             theme: theme,
             intensity: intensity,
             tempo: tempo
         }
     };
-
 
     // Clear previous journey
     journeyHistory = [];
@@ -912,7 +1148,7 @@ function enterBoston() {
     if (sceneTitle) {
 
         sceneTitle.textContent =
-            "The Saturday Morning";
+            "The First Moment";
 
     }
 
@@ -949,8 +1185,7 @@ function enterBoston() {
                     Nothing seems particularly important
                     yet.
 
-                    You simply have a free Saturday
-                    morning ahead of you.
+                    You simply have some time ahead of you.
 
                 </div>
 
