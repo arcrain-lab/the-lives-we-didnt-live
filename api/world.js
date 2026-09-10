@@ -652,6 +652,105 @@ Return a concise, visually structured moment.
     }
 
     // =====================================================
+    // IMAGE GENERATION
+    // =====================================================
+
+    let imageData = null;
+
+    if (
+      result.shouldGenerateImage === true &&
+      result.imageType === "character" &&
+      result.imagePrompt
+    ) {
+      console.log("Generating character image...");
+
+      try {
+        const imageResponse = await fetch(
+          "https://api.openai.com/v1/responses",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization":
+                `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+
+            body: JSON.stringify({
+              model: "gpt-5.6-luna",
+
+              input: [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "input_text",
+                      text:
+                        `Generate an image based on this visual description:\n\n${result.imagePrompt}`
+                    }
+                  ]
+                }
+              ],
+
+              tools: [
+                {
+                  type: "image_generation",
+                  model: "gpt-image-2",
+                  size: "1024x1024",
+                  quality: "medium"
+                }
+              ]
+            })
+          }
+        );
+
+        const imageResult =
+          await imageResponse.json();
+
+        if (!imageResponse.ok) {
+
+          console.error(
+            "Image generation failed:",
+            imageResult
+          );
+
+        } else {
+
+          const imageCall =
+            imageResult.output?.find(
+              item =>
+                item.type ===
+                "image_generation_call"
+            );
+
+          if (imageCall?.result) {
+
+            imageData =
+              `data:image/png;base64,${imageCall.result}`;
+
+            console.log(
+              "Character image generated successfully."
+            );
+
+          } else {
+
+            console.error(
+              "No image result returned:",
+              imageResult
+            );
+          }
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Image generation error:",
+          error
+        );
+      }
+    }
+    
+    // =====================================================
     // RETURN
     // =====================================================
 
