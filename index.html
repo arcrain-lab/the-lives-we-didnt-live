@@ -250,10 +250,10 @@ button, input, select {
 /* ===== THREE COLUMN LAYOUT ===== */
 
 .world-layout {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 280px minmax(0, 1fr) 280px;
-    gap: 32px;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 280px minmax(400px, 1fr) 280px !important;
+    gap: 32px !important;
     align-items: start;
 }
 
@@ -506,11 +506,6 @@ button, input, select {
 
     .world {
         padding: 25px 18px 50px;
-    }
-
-    .world-layout {
-        grid-template-columns: 1fr;
-        gap: 25px;
     }
 
     .world-side {
