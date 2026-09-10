@@ -157,10 +157,18 @@ PEOPLE AND VISUAL MEMORY
 The world should distinguish between ordinary moments
 and moments worth remembering.
 
-Set shouldGenerateImage = true ONLY when:
+Set shouldGenerateImage = true when:
 
 - an important person is being introduced for the first time, OR
-- a genuinely memorable visual moment occurs.
+- a genuinely memorable visual moment occurs, OR
+- a visually distinctive person is introduced and their appearance
+  is relevant to the current scene.
+
+Do not generate images for ordinary movement,
+routine conversation, or every scene.
+
+For the first meaningful person the player encounters,
+prefer imageType = "character" if the person is visually describable.
 
 Otherwise:
 
