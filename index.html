@@ -239,18 +239,15 @@ button, input, select {
 }
 
 /* ---------- WORLD ---------- */
-/* =========================================
-   WORLD — THREE COLUMN LAYOUT
-========================================= */
 
 .world {
     width: 100%;
-    max-width: 1400px;
-    justify-content: flex-start;
+    max-width: 1400px !important;
     padding: 40px 30px 70px;
+    justify-content: flex-start;
 }
 
-/* Main three-column structure */
+/* ===== THREE COLUMN LAYOUT ===== */
 
 .world-layout {
     width: 100%;
@@ -260,12 +257,66 @@ button, input, select {
     align-items: start;
 }
 
-/* ===== WORLD CENTER ===== */
+/* ===== LEFT / RIGHT SIDE PANELS ===== */
+
+.world-side {
+    position: sticky;
+    top: 35px;
+    min-width: 0;
+    min-height: 260px;
+}
+
+.side-title {
+    margin-bottom: 14px;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .5;
+}
+
+.world-side-placeholder {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border: 1px dashed rgba(255,255,255,.18);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,.25);
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+.world-side-image {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 14px;
+    display: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+
+.character-quote {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: .65;
+}
+
+/* ===== CENTER ===== */
+
+.world-center {
+    width: 100%;
+    min-width: 0;
+}
+
+/* ===== ENVIRONMENT HERO ===== */
 
 .environment-hero {
     position: relative;
     width: 100%;
-    min-height: 420px;
+    height: 420px;
     border-radius: 18px;
     overflow: hidden;
     background: #eee;
@@ -275,7 +326,7 @@ button, input, select {
     width: 100%;
     height: 420px;
     object-fit: cover;
-    display: block;
+    display: none;
 }
 
 .environment-overlay {
@@ -283,8 +334,8 @@ button, input, select {
     inset: 0;
     background: linear-gradient(
         to bottom,
-        rgba(0,0,0,0.15),
-        rgba(0,0,0,0.45)
+        rgba(0,0,0,.15),
+        rgba(0,0,0,.45)
     );
 }
 
@@ -299,15 +350,129 @@ button, input, select {
     color: white;
 }
 
+.world-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: .75;
+}
+
+.scene-title {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1.25;
+    font-weight: 500;
+}
+
+/* ===== STORY ===== */
+
 .story-panel {
     margin-top: 22px;
     padding: 28px;
     border-radius: 18px;
     background: white;
+    color: #222;
 }
 
 .scene-text {
+    width: 100%;
+}
+
+.world-scene {
+    line-height: 1.75;
+}
+
+.world-label {
+    margin-bottom: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .45;
+}
+
+.world-environment,
+.world-event {
+    margin-bottom: 24px;
+    font-size: 16px;
     line-height: 1.8;
+}
+
+.world-divider {
+    height: 1px;
+    margin: 28px 0;
+    background: rgba(0,0,0,.08);
+}
+
+.world-person {
+    margin-top: 28px;
+}
+
+.world-person-name {
+    margin-bottom: 6px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.world-person-description {
+    margin-bottom: 10px;
+    font-size: 14px;
+    opacity: .65;
+}
+
+.world-dialogue {
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+/* ===== CHOICES ===== */
+
+.choice-area {
+    margin-top: 42px;
+}
+
+.choice {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 15px 18px;
+    text-align: left;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #f8f8f8;
+    color: #222;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+.choice:hover {
+    background: #eee;
+    transform: translateY(-1px);
+}
+
+.free-input {
+    width: 100%;
+    margin-top: 18px;
+    padding: 15px 18px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    color: #222;
+}
+
+.tempo-bar {
+    margin-top: 28px;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    opacity: .4;
 }
 
 /* ===== MEMORY ===== */
@@ -335,197 +500,7 @@ button, input, select {
     border-bottom: 1px solid #eee;
 }
 
-.state-row:last-child {
-    border-bottom: none;
-}
-    
-/* =========================================
-   SIDE PANELS
-========================================= */
-
-.world-side {
-    position: sticky;
-    top: 35px;
-    min-height: 260px;
-}
-
-.world-side-image {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    object-fit: cover;
-    border-radius: 14px;
-    display: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-}
-
-.world-side-placeholder {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    border: 1px dashed rgba(255,255,255,0.18);
-    border-radius: 14px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    color: rgba(255,255,255,0.25);
-    font-size: 11px;
-    letter-spacing: 2px;
-}
-
-/* =========================================
-   CENTER STORY
-========================================= */
-
-.world-center {
-    width: 100%;
-    min-width: 0;
-}
-
-.world-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 28px;
-
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-
-    opacity: 0.55;
-}
-
-.scene-title {
-    margin: 0 0 28px;
-
-    font-size: 32px;
-    line-height: 1.25;
-    font-weight: 500;
-}
-
-.scene-text {
-    width: 100%;
-}
-
-/* =========================================
-   STRUCTURED SCENE
-========================================= */
-
-.world-scene {
-    line-height: 1.75;
-}
-
-.world-label {
-    margin-bottom: 8px;
-
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-
-    opacity: 0.45;
-}
-
-.world-environment,
-.world-event {
-    margin-bottom: 24px;
-
-    font-size: 16px;
-    line-height: 1.8;
-}
-
-.world-divider {
-    height: 1px;
-    margin: 28px 0;
-
-    background: rgba(255,255,255,0.08);
-}
-
-.world-person {
-    margin-top: 28px;
-}
-
-.world-person-name {
-    margin-bottom: 6px;
-
-    font-size: 12px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
-.world-person-description {
-    margin-bottom: 10px;
-
-    font-size: 14px;
-    opacity: 0.65;
-}
-
-.world-dialogue {
-    font-size: 17px;
-    line-height: 1.7;
-}
-
-/* =========================================
-   CHOICES
-========================================= */
-
-.choice-area {
-    margin-top: 42px;
-}
-
-.choice {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 15px 18px;
-
-    text-align: left;
-
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.10);
-
-    background: rgba(255,255,255,0.035);
-    color: #ffffff;
-
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.choice:hover {
-    background: rgba(255,255,255,0.08);
-    color: #ffffff;
-    transform: translateY(-1px);
-}
-
-.free-input {
-    width: 100%;
-    margin-top: 18px;
-    padding: 15px 18px;
-
-    box-sizing: border-box;
-
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.10);
-
-    background: rgba(255,255,255,0.035);
-}
-
-/* =========================================
-   TEMPO
-========================================= */
-
-.tempo-bar {
-    margin-top: 28px;
-
-    font-size: 11px;
-    letter-spacing: 1px;
-
-    opacity: 0.4;
-}
-
-/* =========================================
-   MOBILE
-========================================= */
+/* ===== MOBILE ===== */
 
 @media (max-width: 950px) {
 
@@ -534,21 +509,13 @@ button, input, select {
     }
 
     .world-layout {
-        grid-template-columns: 280px minmax(0, 1fr) 280px;
-        gap: 32px;
+        grid-template-columns: 1fr;
+        gap: 25px;
     }
 
     .world-side {
         position: static;
         min-height: 0;
-    }
-
-    .world-side-placeholder {
-        display: none;
-    }
-
-    .world-side-image {
-        aspect-ratio: 16 / 9;
     }
 
     .world-left {
@@ -563,6 +530,10 @@ button, input, select {
         order: 3;
     }
 
+    .world-side-image,
+    .world-side-placeholder {
+        aspect-ratio: 16 / 9;
+    }
 }
 
 /* ---------- ARCHIVE ---------- */
