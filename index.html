@@ -1334,26 +1334,6 @@ function enterBoston() {
     // MEMORY IMAGE
     // -----------------------------------------
     
-    const memoryImage =
-        document.getElementById("memoryImage");
-    
-    const memoryCaption =
-        document.getElementById("memoryCaption");
-    
-    if (
-        memoryImage &&
-        data.memoryImageUrl
-    ) {
-        memoryImage.src = data.memoryImageUrl;
-        memoryImage.style.display = "block";
-    
-        if (memoryCaption) {
-            memoryCaption.textContent =
-                data.memoryCaption ||
-                "A moment worth remembering.";
-        }
-    }
-    
     if (sceneTitle) {
 
         sceneTitle.textContent =
@@ -1764,17 +1744,43 @@ function renderWorldResponse(data) {
     });
 
 // -----------------------------------------
-// ENVIRONMENT IMAGE
+// CHARACTER / MEMORY IMAGE
 // -----------------------------------------
 
-const environmentImage =
-    document.getElementById("environmentImage");
+const characterImage =
+    document.getElementById("characterImage");
 
-if (environmentImage && data.imageData) {
-    environmentImage.src = data.imageData;
-    environmentImage.style.display = "block";
+const memoryImage =
+    document.getElementById("memoryImage");
+
+const memoryCaption =
+    document.getElementById("memoryCaption");
+
+// Character image
+if (
+    data.imageData &&
+    data.imageType === "character" &&
+    characterImage
+) {
+    characterImage.src = data.imageData;
+    characterImage.style.display = "block";
 }
 
+// Memory image
+if (
+    data.imageData &&
+    data.imageType === "memory" &&
+    memoryImage
+) {
+    memoryImage.src = data.imageData;
+    memoryImage.style.display = "block";
+
+    if (memoryCaption) {
+        memoryCaption.textContent =
+            data.memoryCaption ||
+            "A moment worth remembering.";
+    }
+}
     // -----------------------------------------
     // Store current choices
     // -----------------------------------------
