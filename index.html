@@ -646,6 +646,38 @@ button, input, select { font-family: inherit; }
   }
 }
 </style>
+
+<style>
+.memory-meta {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0,0,0,.08);
+}
+.memory-meta-title {
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    opacity: .55;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+.memory-meta-value {
+    font-size: 13px;
+    line-height: 1.5;
+}
+.memory-person {
+    margin-bottom: 8px;
+}
+.memory-person strong {
+    display: block;
+}
+.memory-person span {
+    display: block;
+    opacity: .7;
+    font-size: 12px;
+    line-height: 1.4;
+}
+</style>
 </head>
 
 <body>
@@ -1009,6 +1041,14 @@ button, input, select { font-family: inherit; }
         >
         </div>
 
+        <div class="memory-meta">
+            <div class="memory-meta-title">TIME</div>
+            <div id="memoryTime" class="memory-meta-value">—</div>
+
+            <div class="memory-meta-title">PEOPLE YOU MET</div>
+            <div id="memoryPeople" class="memory-meta-value">No one yet.</div>
+        </div>
+
     </div>
 
     <div class="world-state">
@@ -1122,6 +1162,7 @@ let worldState = {
 };
 
 let journeyHistory = [];
+let knownPeople = [];
 
 
 // =====================================================
@@ -1307,6 +1348,13 @@ function enterBoston() {
     if (worldTime) {
         worldTime.textContent = realTime;
     }
+
+    const memoryTime =
+        document.getElementById("memoryTime");
+
+    if (memoryTime) {
+        memoryTime.textContent = realTime;
+    }
     
     worldState = {
         time: realTime,
@@ -1326,6 +1374,7 @@ function enterBoston() {
 
     // Clear previous journey
     journeyHistory = [];
+    knownPeople = [];
 
 
     // -----------------------------------------
@@ -1852,6 +1901,60 @@ if (
 
         worldState.location = data.location;
 
+    }
+
+
+    // -----------------------------------------
+    // UPDATE MEMORY STATE
+    // -----------------------------------------
+
+    const memoryTime =
+        document.getElementById("memoryTime");
+
+    const memoryPeople =
+        document.getElementById("memoryPeople");
+
+    if (data.time && memoryTime) {
+        memoryTime.textContent = String(data.time);
+    }
+
+    if (Array.isArray(data.people)) {
+        data.people.forEach(person => {
+            if (!person) return;
+
+            const name = String(person.name || "").trim();
+            if (!name) return;
+
+            const existing = knownPeople.find(
+                p => p.name.toLowerCase() === name.toLowerCase()
+            );
+
+            if (!existing) {
+                knownPeople.push({
+                    name,
+                    description: String(person.description || "").trim()
+                });
+            } else if (person.description) {
+                existing.description = String(person.description).trim();
+            }
+        });
+    }
+
+    if (memoryPeople) {
+        if (knownPeople.length === 0) {
+            memoryPeople.textContent = "No one yet.";
+        } else {
+            memoryPeople.innerHTML = knownPeople
+                .map(person => `
+                    <div class="memory-person">
+                        <strong>${escapeHtml(person.name)}</strong>
+                        ${person.description
+                            ? `<span>${escapeHtml(person.description)}</span>`
+                            : ""}
+                    </div>
+                `)
+                .join("");
+        }
     }
 
 
