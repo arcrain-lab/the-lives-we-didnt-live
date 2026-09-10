@@ -251,17 +251,8 @@ button, input, select {
 .world-layout {
     width: 100%;
     display: grid;
-
-    /*
-     * CHARACTER | WORLD + STORY | MEMORY
-     */
-    grid-template-columns:
-        minmax(280px, 320px)
-        minmax(600px, 1fr)
-        minmax(280px, 320px);
-
+    grid-template-columns: 280px minmax(0, 1fr) 280px;
     gap: 32px;
-
     align-items: start;
 }
 
