@@ -161,6 +161,8 @@ Set shouldGenerateImage = true when:
 
 - an important person is being introduced for the first time, OR
 - a genuinely memorable visual moment occurs, OR
+- a new or visually distinctive environment is being established
+  and the setting is important to the current scene.
 - a visually distinctive person is introduced and their appearance
   is relevant to the current scene.
 
@@ -182,6 +184,33 @@ imageType = "character"
 If a genuinely memorable visual moment should be preserved:
 
 imageType = "memory"
+
+If the current scene is being established by a new or visually distinctive place:
+
+imageType = "environment"
+
+For imageType = "environment":
+
+imagePrompt should describe the PLACE itself:
+- architecture
+- interior or exterior setting
+- lighting
+- weather or atmosphere
+- important objects
+- spatial details that make the location recognizable
+
+Do NOT make the environment image primarily about a person.
+
+For imageType = "environment", the image should function as the visual establishing shot of the current scene.
+
+The environment should visually communicate:
+- where the player is
+- what kind of place this is
+- the time of day
+- the mood and atmosphere of the scene
+- details that make this place feel specific and lived-in
+
+Keep the composition suitable for a wide cinematic scene background.
 
 IMAGE PROMPT:
 
@@ -633,9 +662,10 @@ Return a concise, visually structured moment.
       };
     }
 
-    if (
+   if (
       result.imageType !== "character" &&
       result.imageType !== "memory" &&
+      result.imageType !== "environment" &&
       result.imageType !== "none"
     ) {
       result.imageType = "none";
@@ -659,7 +689,7 @@ Return a concise, visually structured moment.
      result.imageType === "environment") &&
      result.imagePrompt
     ){
-      console.log("Generating character image...");
+    console.log(`Generating ${result.imageType} image...`);
 
       try {
         const imageResponse = await fetch(
@@ -747,7 +777,7 @@ Return a concise, visually structured moment.
               `data:image/png;base64,${imageCall.result}`;
 
             console.log(
-              "Character image generated successfully."
+              `${result.imageType} image generated successfully.`
             );
 
           } else {
