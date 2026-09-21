@@ -6,6 +6,7 @@
 // ============================================================
 
 export default async function handler(req, res) {
+
   if (req.method !== "POST") {
     return res.status(405).json({
       ok: false,
@@ -14,6 +15,11 @@ export default async function handler(req, res) {
   }
 
   try {
+
+    // ============================================================
+    // INPUT
+    // ============================================================
+
     const {
       playerAction,
       worldState = {},
@@ -28,6 +34,7 @@ export default async function handler(req, res) {
         error: "Missing playerAction"
       });
     }
+
 
     // ============================================================
     // WORLD PHILOSOPHY
@@ -93,21 +100,27 @@ The player should not automatically be the center of attention.
 
 Maintain continuity with previous world state.
 
-If a location already exists in worldState, reuse that location instead of inventing a duplicate.
+If a location already exists in worldState,
+reuse that location instead of inventing a duplicate.
 
-If an NPC already exists in worldState, reuse that NPC instead of inventing a duplicate.
+If an NPC already exists in worldState,
+reuse that NPC instead of inventing a duplicate.
 
-Names, addresses, relationships, memories and physical appearance should remain consistent.
+Names, addresses, relationships, memories and physical appearance
+should remain consistent.
 
 Time must progress naturally.
 
-Weather and environment should be plausible for Boston and the current date/time.
+Weather and environment should be plausible for Boston
+and the current date/time.
 
-The world should feel like a believable alternate life rather than a scripted video game.
+The world should feel like a believable alternate life
+rather than a scripted video game.
 `;
 
+
     // ============================================================
-    // INITIAL SCENE INSTRUCTION
+    // INITIAL SCENE
     // ============================================================
 
     const initialSceneInstruction = initialScene
@@ -158,15 +171,15 @@ Include:
 4. The environment image should primarily depict the LOCATION,
 not a close-up portrait of the player.
 
-5. The environment should feel like a real Boston place interpreted through
-the game's illustrated graphic-novel visual style.
+5. The environment should feel like a real Boston place
+interpreted through the game's illustrated graphic-novel visual style.
 
 6. Do not invent a fantasy location.
 
 7. imageTypes MUST contain "environment".
 
-8. The first scene should not automatically introduce an NPC unless
-there is a natural reason for one to be present.
+8. The first scene should not automatically introduce an NPC
+unless there is a natural reason for one to be present.
 
 9. Do not force an important event.
 
@@ -179,15 +192,18 @@ The first scene can simply establish:
 `
       : "";
 
+
     // ============================================================
     // WORLD STATE CONTEXT
     // ============================================================
 
-    const worldStateContext = JSON.stringify(
-      worldState || {},
-      null,
-      2
-    );
+    const worldStateContext =
+      JSON.stringify(
+        worldState || {},
+        null,
+        2
+      );
+
 
     // ============================================================
     // USER PROMPT
@@ -219,15 +235,19 @@ Remember:
 - Memories should only be created when something meaningfully memorable happens.
 `;
 
+
     // ============================================================
     // JSON SCHEMA
     // ============================================================
 
     const schema = {
+
       type: "object",
+
       additionalProperties: false,
 
       properties: {
+
         sceneTitle: {
           type: "string"
         },
@@ -261,13 +281,17 @@ Remember:
         },
 
         people: {
+
           type: "array",
 
           items: {
+
             type: "object",
+
             additionalProperties: false,
 
             properties: {
+
               name: {
                 type: "string"
               },
@@ -299,6 +323,7 @@ Remember:
               characterImagePrompt: {
                 type: "string"
               }
+
             },
 
             required: [
@@ -311,7 +336,9 @@ Remember:
               "memoryToAdd",
               "characterImagePrompt"
             ]
+
           }
+
         },
 
         dialogue: {
@@ -319,11 +346,13 @@ Remember:
         },
 
         choices: {
+
           type: "array",
 
           items: {
             type: "string"
           }
+
         },
 
         worldState: {
@@ -336,16 +365,21 @@ Remember:
         },
 
         imageTypes: {
+
           type: "array",
 
           items: {
+
             type: "string",
+
             enum: [
               "environment",
               "npc",
               "memory"
             ]
+
           }
+
         },
 
         imagePrompt: {
@@ -363,9 +397,11 @@ Remember:
         memoryCaption: {
           type: "string"
         }
+
       },
 
       required: [
+
         "sceneTitle",
         "time",
         "location",
@@ -384,29 +420,37 @@ Remember:
         "environmentImagePrompt",
         "memoryMoment",
         "memoryCaption"
+
       ]
+
     };
 
+
     // ============================================================
-    // OPENAI RESPONSE
+    // OPENAI WORLD ENGINE
     // ============================================================
 
     const response = await fetch(
       "https://api.openai.com/v1/responses",
       {
+
         method: "POST",
 
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+          "Authorization":
+            `Bearer ${process.env.OPENAI_API_KEY}`
         },
 
         body: JSON.stringify({
+
           model: "gpt-5.6-luna",
 
           input: [
+
             {
               role: "system",
+
               content: [
                 {
                   type: "input_text",
@@ -417,6 +461,7 @@ Remember:
 
             {
               role: "user",
+
               content: [
                 {
                   type: "input_text",
@@ -424,22 +469,39 @@ Remember:
                 }
               ]
             }
+
           ],
 
           text: {
+
             format: {
+
               type: "json_schema",
+
               name: "world_engine_response",
+
               strict: true,
+
               schema
+
             }
+
           }
+
         })
+
       }
     );
 
+
+    // ============================================================
+    // HANDLE WORLD ENGINE ERROR
+    // ============================================================
+
     if (!response.ok) {
-      const errorText = await response.text();
+
+      const errorText =
+        await response.text();
 
       console.error(
         "OpenAI World Engine error:",
@@ -450,136 +512,156 @@ Remember:
         ok: false,
         error: errorText
       });
+
     }
 
-    const data = await response.json();
 
     // ============================================================
-    // EXTRACT MODEL OUTPUT
+    // PARSE RESPONSE
     // ============================================================
 
-    let rawOutput = "";
+    const data =
+      await response.json();
 
-    if (data.output_text) {
-      rawOutput = data.output_text;
-    } else if (Array.isArray(data.output)) {
-      for (const item of data.output) {
-        if (
-          item.type === "message" &&
-          Array.isArray(item.content)
-        ) {
-          for (const content of item.content) {
-            if (
-              content.type === "output_text" &&
-              content.text
-            ) {
-              rawOutput += content.text;
-            }
-          }
-        }
-      }
-    }
+    const outputText =
+      data.output_text ||
+      data.output
+        ?.map(item =>
+          item.type === "message"
+            ? item.content
+                ?.map(c => c.text || "")
+                .join("")
+            : ""
+        )
+        .join("") ||
+      "";
 
-    if (!rawOutput) {
+    if (!outputText) {
+
       throw new Error(
         "World Engine returned no structured output."
       );
+
     }
+
 
     let result;
 
     try {
-      result = JSON.parse(rawOutput);
-    } catch (error) {
+
+      result =
+        JSON.parse(outputText);
+
+    } catch (parseError) {
+
       console.error(
-        "Failed to parse World Engine JSON:",
-        rawOutput
+        "World Engine JSON parse error:",
+        outputText
       );
 
       throw new Error(
         "World Engine returned invalid JSON."
       );
+
     }
+
 
     // ============================================================
     // NORMALIZE WORLD STATE
     // ============================================================
 
-    if (!result.worldState) {
+    if (
+      !result.worldState ||
+      typeof result.worldState !== "object"
+    ) {
+
       result.worldState = {};
+
     }
 
-    if (!Array.isArray(result.worldState.locations)) {
+    if (
+      !Array.isArray(
+        result.worldState.locations
+      )
+    ) {
+
       result.worldState.locations = [];
+
     }
 
-    if (!Array.isArray(result.worldState.people)) {
+    if (
+      !Array.isArray(
+        result.worldState.people
+      )
+    ) {
+
       result.worldState.people = [];
+
     }
 
-    if (!Array.isArray(result.worldState.memories)) {
-      result.worldState.memories = [];
-    }
 
     // ============================================================
     // LOCATION RECONCILIATION
     // ============================================================
 
-    let currentLocation = null;
-
     if (result.location) {
-      const normalizedName =
+
+      const normalizedLocationName =
         String(result.location)
           .trim()
           .toLowerCase();
 
-      const normalizedAddress =
-        String(result.locationAddress || "")
-          .trim()
-          .toLowerCase();
+      let existingLocation =
+        result.worldState.locations.find(
+          location => {
 
-      currentLocation =
-        result.worldState.locations.find((loc) => {
+            const name =
+              String(location.name || "")
+                .trim()
+                .toLowerCase();
 
-          const locName =
-            String(loc.name || "")
-              .trim()
-              .toLowerCase();
+            const address =
+              String(location.address || "")
+                .trim()
+                .toLowerCase();
 
-          const locAddress =
-            String(loc.address || "")
-              .trim()
-              .toLowerCase();
+            const incomingAddress =
+              String(result.locationAddress || "")
+                .trim()
+                .toLowerCase();
 
-          if (
-            normalizedAddress &&
-            locAddress &&
-            normalizedAddress === locAddress
-          ) {
-            return true;
+            return (
+              name === normalizedLocationName ||
+              (
+                incomingAddress &&
+                address &&
+                address === incomingAddress
+              )
+            );
+
           }
+        );
 
-          return (
-            normalizedName &&
-            locName === normalizedName
-          );
-        });
 
       // ----------------------------------------------------------
-      // CREATE LOCATION
+      // NEW LOCATION
       // ----------------------------------------------------------
 
-      if (!currentLocation) {
+      if (!existingLocation) {
+
         const slug =
-          normalizedName
+          normalizedLocationName
             .replace(/[^a-z0-9]+/g, "_")
             .replace(/^_+|_+$/g, "")
             .slice(0, 80);
 
-        currentLocation = {
-          entityId: `loc_${slug || "unknown"}`,
+        existingLocation = {
 
-          name: result.location,
+          entityId:
+            `loc_${slug || "unknown"}`,
+
+          name:
+            result.location,
 
           address:
             result.locationAddress || "",
@@ -595,47 +677,59 @@ Remember:
 
           lastSeen:
             result.time || ""
+
         };
 
         result.worldState.locations.push(
-          currentLocation
+          existingLocation
         );
 
         result.locationIsNew = true;
+
       }
 
+
       // ----------------------------------------------------------
-      // UPDATE EXISTING LOCATION
+      // EXISTING LOCATION
       // ----------------------------------------------------------
 
       else {
-        currentLocation.lastSeen =
+
+        existingLocation.lastSeen =
           result.time ||
-          currentLocation.lastSeen ||
+          existingLocation.lastSeen ||
           "";
 
         if (
           result.locationDescription &&
-          !currentLocation.description
+          !existingLocation.description
         ) {
-          currentLocation.description =
+
+          existingLocation.description =
             result.locationDescription;
+
         }
 
         if (
           result.locationAddress &&
-          !currentLocation.address
+          !existingLocation.address
         ) {
-          currentLocation.address =
+
+          existingLocation.address =
             result.locationAddress;
+
         }
 
         result.locationIsNew = false;
+
       }
 
+
       result.locationEntityId =
-        currentLocation.entityId;
+        existingLocation.entityId;
+
     }
+
 
     // ============================================================
     // NPC RECONCILIATION
@@ -646,41 +740,56 @@ Remember:
         ? result.people
         : [];
 
-    for (const person of normalizedPeople) {
-      if (!person || !person.name) {
+
+    for (
+      const person
+      of normalizedPeople
+    ) {
+
+      if (
+        !person ||
+        !person.name
+      ) {
         continue;
       }
+
 
       const normalizedPersonName =
         String(person.name)
           .trim()
           .toLowerCase();
 
+
       let existingPerson =
         result.worldState.people.find(
-          (npc) =>
+          npc =>
             String(npc.name || "")
               .trim()
               .toLowerCase() ===
             normalizedPersonName
         );
 
+
       // ----------------------------------------------------------
-      // CREATE NPC
+      // NEW NPC
       // ----------------------------------------------------------
 
       if (!existingPerson) {
+
         const slug =
           normalizedPersonName
             .replace(/[^a-z0-9]+/g, "_")
             .replace(/^_+|_+$/g, "")
             .slice(0, 80);
 
+
         existingPerson = {
+
           entityId:
             `npc_${slug || "unknown"}`,
 
-          name: person.name,
+          name:
+            person.name,
 
           description:
             person.description || "",
@@ -701,66 +810,96 @@ Remember:
 
           lastSeen:
             result.time || ""
+
         };
+
 
         result.worldState.people.push(
           existingPerson
         );
 
+
         person.isNew = true;
+
       }
 
+
       // ----------------------------------------------------------
-      // UPDATE NPC
+      // EXISTING NPC
       // ----------------------------------------------------------
 
       else {
+
         existingPerson.lastSeen =
           result.time ||
           existingPerson.lastSeen ||
           "";
 
+
         if (
           person.currentState
         ) {
+
           existingPerson.currentState =
             person.currentState;
+
         }
+
 
         if (
           person.description &&
           !existingPerson.description
         ) {
+
           existingPerson.description =
             person.description;
+
         }
 
+
         person.isNew = false;
+
       }
+
 
       person.entityId =
         existingPerson.entityId;
 
+
       // ----------------------------------------------------------
-      // MEMORY
+      // NPC MEMORY
       // ----------------------------------------------------------
 
       if (
         person.memoryToAdd &&
         person.memoryToAdd.trim()
       ) {
+
         if (
-          !Array.isArray(existingPerson.memories)
+          !Array.isArray(
+            existingPerson.memories
+          )
         ) {
+
           existingPerson.memories = [];
+
         }
 
+
         existingPerson.memories.push({
-          text: person.memoryToAdd,
-          time: result.time || ""
+
+          text:
+            person.memoryToAdd,
+
+          time:
+            result.time || ""
+
         });
+
       }
+
     }
+
 
     // ============================================================
     // IMAGE TYPES
@@ -771,15 +910,22 @@ Remember:
         ? result.imageTypes
         : [];
 
-    // Initial scene MUST create environment image
+
+    // The first scene ALWAYS gets an environment image.
+
     if (
       initialScene &&
       !imageTypes.includes("environment")
     ) {
+
       imageTypes.push("environment");
+
     }
 
-    result.imageTypes = imageTypes;
+
+    result.imageTypes =
+      imageTypes;
+
 
     // ============================================================
     // FALLBACK ENVIRONMENT PROMPT
@@ -789,30 +935,40 @@ Remember:
       initialScene &&
       !result.environmentImagePrompt
     ) {
+
       result.environmentImagePrompt = [
-        result.location || "Boston",
 
-        result.locationAddress || "",
+        result.location ||
+          "Boston",
 
-        result.locationDescription || "",
+        result.locationAddress ||
+          "",
 
-        result.environment || "",
+        result.locationDescription ||
+          "",
+
+        result.environment ||
+          "",
 
         "Realistic Boston establishing shot.",
 
         "Specific real-world location.",
 
         "Illustrated graphic-novel visual style."
+
       ]
         .filter(Boolean)
         .join("\n");
+
     }
+
 
     // ============================================================
     // IMAGE JOBS
     // ============================================================
 
     const imageJobs = [];
+
 
     // ============================================================
     // ENVIRONMENT IMAGE
@@ -822,7 +978,9 @@ Remember:
       imageTypes.includes("environment") &&
       result.location
     ) {
+
       imageJobs.push({
+
         type: "environment",
 
         id:
@@ -830,6 +988,7 @@ Remember:
           `loc_${Date.now()}`,
 
         prompt: `
+
 Create a persistent environment illustration for an
 interactive life simulation.
 
@@ -877,27 +1036,39 @@ No:
 - fantasy architecture
 - photorealistic skin texture
 - 3D-rendered appearance
+
 `,
 
         size: "1536x1024"
+
       });
+
     }
+
 
     // ============================================================
     // NPC IMAGES
     // ============================================================
 
-    for (const person of normalizedPeople) {
+    for (
+      const person
+      of normalizedPeople
+    ) {
+
       if (
         person.isNew &&
         person.entityId
       ) {
+
         imageJobs.push({
+
           type: "npc",
 
-          id: person.entityId,
+          id:
+            person.entityId,
 
           prompt: `
+
 Create a persistent character identity illustration.
 
 CHARACTER:
@@ -919,31 +1090,38 @@ STYLE:
 - painterly shading
 - soft cinematic lighting
 - realistic but slightly stylized human proportions
-- warm atmospheric storytelling
-- consistent facial structure
 - natural clothing
 - believable everyday human appearance
+- consistent facial structure
 
-This image establishes the character's persistent visual identity.
+This image establishes the character's
+persistent visual identity.
 
 Do not make the character look like a celebrity.
 
-Do not make them glamorous unless their description requires it.
+Do not make them glamorous unless
+their description requires it.
 
 No:
 - text
 - captions
 - speech bubbles
 - logos
-- watermark
+- watermarks
 - photorealistic skin texture
 - 3D-rendered appearance
+
 `,
 
-          size: "1024x1536"
+          size:
+            "1024x1536"
+
         });
+
       }
+
     }
+
 
     // ============================================================
     // MEMORY IMAGE
@@ -953,13 +1131,16 @@ No:
       result.memoryMoment &&
       result.memoryMoment.trim()
     ) {
+
       imageJobs.push({
+
         type: "memory",
 
         id:
           `memory_${Date.now()}`,
 
         prompt: `
+
 Create a memory illustration for the player's life.
 
 MEMORY:
@@ -989,11 +1170,16 @@ No:
 - speech bubbles
 - logos
 - watermarks
+
 `,
 
-        size: "1536x1024"
+        size:
+          "1536x1024"
+
       });
+
     }
+
 
     // ============================================================
     // PLAYER AVATAR
@@ -1001,19 +1187,25 @@ No:
 
     let playerAvatarJob = null;
 
+
     if (
       initialScene &&
       generatePlayerAvatar &&
       playerPhoto
     ) {
+
       playerAvatarJob = {
+
         type: "player",
 
-        id: "player_avatar",
+        id:
+          "player_avatar",
 
-        inputImage: playerPhoto,
+        inputImage:
+          playerPhoto,
 
         prompt: `
+
 Transform the supplied reference photograph into a
 persistent illustrated character identity for an
 interactive graphic-novel life simulation.
@@ -1023,6 +1215,7 @@ IMPORTANT:
 The supplied photograph is a REFERENCE for the player's identity.
 
 Preserve:
+
 - recognizable facial identity
 - face shape
 - major facial features
@@ -1033,6 +1226,7 @@ Preserve:
 - natural proportions
 
 Do NOT:
+
 - beautify the person
 - make them younger
 - make them older
@@ -1059,6 +1253,7 @@ This image will appear in the LEFT CHARACTER panel.
 Create a vertically oriented character portrait.
 
 No:
+
 - photorealistic skin texture
 - 3D-rendered appearance
 - text
@@ -1066,11 +1261,16 @@ No:
 - speech bubbles
 - logos
 - watermarks
+
 `,
 
-        size: "1024x1536"
+        size:
+          "1024x1536"
+
       };
+
     }
+
 
     // ============================================================
     // GENERATE IMAGES
@@ -1080,44 +1280,65 @@ No:
       ...imageJobs
     ];
 
+
     if (playerAvatarJob) {
+
       jobsToGenerate.push(
         playerAvatarJob
       );
+
     }
+
 
     const generatedImages = [];
 
+
     for (
-      const job of jobsToGenerate
+      const job
+      of jobsToGenerate
     ) {
+
       try {
+
         const content = [];
+
 
         // --------------------------------------------------------
         // INPUT IMAGE
         // --------------------------------------------------------
 
         if (job.inputImage) {
+
           content.push({
-            type: "input_image",
+
+            type:
+              "input_image",
 
             image_url:
               job.inputImage,
 
-            detail: "high"
+            detail:
+              "high"
+
           });
+
         }
+
 
         // --------------------------------------------------------
         // IMAGE PROMPT
         // --------------------------------------------------------
 
         content.push({
-          type: "input_text",
 
-          text: job.prompt
+          type:
+            "input_text",
+
+          text:
+            job.prompt
+
         });
+
 
         // --------------------------------------------------------
         // IMAGE GENERATION
@@ -1127,53 +1348,73 @@ No:
           await fetch(
             "https://api.openai.com/v1/responses",
             {
+
               method: "POST",
 
               headers: {
+
                 "Content-Type":
                   "application/json",
 
                 "Authorization":
                   `Bearer ${process.env.OPENAI_API_KEY}`
+
               },
 
-              body: JSON.stringify({
-                model: "gpt-5.6-luna",
+              body:
+                JSON.stringify({
 
-                input: [
-                  {
-                    role: "user",
+                  model:
+                    "gpt-5.6-luna",
 
-                    content
-                  }
-                ],
+                  input: [
 
-                tools: [
-                  {
-                    type:
-                      "image_generation",
+                    {
 
-                    model:
-                      "gpt-image-2",
+                      role:
+                        "user",
 
-                    action:
-                      job.inputImage
-                        ? "auto"
-                        : "generate",
+                      content
 
-                    size:
-                      job.size ||
-                      "1024x1024",
+                    }
 
-                    quality:
-                      "medium"
-                  }
-                ]
-              })
+                  ],
+
+                  tools: [
+
+                    {
+
+                      type:
+                        "image_generation",
+
+                      model:
+                        "gpt-image-2",
+
+                      action:
+                        job.inputImage
+                          ? "auto"
+                          : "generate",
+
+                      size:
+                        job.size ||
+                        "1024x1024",
+
+                      quality:
+                        "medium"
+
+                    }
+
+                  ]
+
+                })
+
             }
+
           );
 
+
         if (!imageResponse.ok) {
+
           const imageError =
             await imageResponse.text();
 
@@ -1183,10 +1424,13 @@ No:
           );
 
           continue;
+
         }
+
 
         const imageData =
           await imageResponse.json();
+
 
         // --------------------------------------------------------
         // EXTRACT GENERATED IMAGE
@@ -1194,30 +1438,41 @@ No:
 
         let imageBase64 = null;
 
+
         if (
           Array.isArray(
             imageData.output
           )
         ) {
+
           for (
             const outputItem
             of imageData.output
           ) {
+
             if (
               outputItem.type ===
               "image_generation_call"
             ) {
+
               if (
                 outputItem.result
               ) {
+
                 imageBase64 =
                   outputItem.result;
+
               }
+
             }
+
           }
+
         }
 
+
         if (!imageBase64) {
+
           console.warn(
             "No generated image found for:",
             job.type,
@@ -1225,24 +1480,35 @@ No:
           );
 
           continue;
+
         }
 
-        generatedImages.push({
-          type: job.type,
 
-          id: job.id,
+        generatedImages.push({
+
+          type:
+            job.type,
+
+          id:
+            job.id,
 
           data:
             `data:image/png;base64,${imageBase64}`
+
         });
 
+
       } catch (imageError) {
+
         console.error(
           "Image generation exception:",
           imageError
         );
+
       }
+
     }
+
 
     // ============================================================
     // SPLIT IMAGE RESULTS
@@ -1252,20 +1518,26 @@ No:
 
     let playerAvatarData = null;
 
+
     for (
       const generated
       of generatedImages
     ) {
+
       if (
         generated.type === "player"
       ) {
+
         playerAvatarData =
           generated.data;
 
         continue;
+
       }
 
+
       assetUpdates.push({
+
         type:
           generated.type,
 
@@ -1274,14 +1546,18 @@ No:
 
         data:
           generated.data
+
       });
+
     }
+
 
     // ============================================================
     // RETURN
     // ============================================================
 
     return res.status(200).json({
+
       ok: true,
 
       ...result,
@@ -1294,7 +1570,9 @@ No:
 
       responseId:
         data.id
+
     });
+
 
   } catch (error) {
 
@@ -1304,11 +1582,15 @@ No:
     );
 
     return res.status(500).json({
+
       ok: false,
 
       error:
         error.message ||
         "Unknown server error"
+
     });
+
   }
+
 }
