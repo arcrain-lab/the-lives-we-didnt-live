@@ -1162,7 +1162,8 @@ let worldState = {
 let worldAssets = {
     locations: {},
     people: {},
-    memories: []
+    memories: [],
+    player: null
 };
 
 let journeyHistory = [];
@@ -1302,41 +1303,16 @@ function getSetting(groupTitle) {
 
 function enterBoston() {
 
-    const theme =
-        selectedTheme || "Ordinary";
+    const theme = selectedTheme || "Ordinary";
+    const intensity = getSetting("Intensity") || "Balanced";
+    const tempo = getSetting("Tempo") || "Normal";
 
-    const intensity =
-        getSetting("Intensity") || "Balanced";
-
-    const tempo =
-        getSetting("Tempo") || "Normal";
-
-    const characterImage =
-        document.getElementById("characterImage");
-    
-    if (characterImage && playerPhoto) {
-        characterImage.src = playerPhoto;
-        characterImage.style.display = "block";
-    }
-    const characterPlaceholder =
-    document.querySelector(".world-left .world-side-placeholder");
-
-    if (characterPlaceholder) {
-        characterPlaceholder.style.display = "none";
-    }
-    const characterQuote =
-    document.getElementById("characterQuote");
-
-    if (characterQuote) {
-        characterQuote.textContent =
-        playerName + " — entering a life that could have been.";
-    }
     // -----------------------------------------
     // INITIAL WORLD STATE
     // -----------------------------------------
 
     const now = new Date();
-    
+
     const realTime = now.toLocaleString("en-US", {
         weekday: "long",
         month: "long",
@@ -1346,20 +1322,7 @@ function enterBoston() {
         hour12: true,
         timeZone: "America/New_York"
     });
-    
-    const worldTime = document.getElementById("worldTime");
-    
-    if (worldTime) {
-        worldTime.textContent = realTime;
-    }
 
-    const memoryTime =
-        document.getElementById("memoryTime");
-
-    if (memoryTime) {
-        memoryTime.textContent = realTime;
-    }
-    
     worldState = {
         time: realTime,
         location: "Boston",
@@ -1381,13 +1344,13 @@ function enterBoston() {
         }
     };
 
-    // Clear previous journey and all persistent visual identities.
     journeyHistory = [];
     knownPeople = [];
     worldAssets = {
         locations: {},
         people: {},
-        memories: []
+        memories: [],
+        player: null
     };
 
     const initialStateMoney = document.getElementById("stateMoney");
@@ -1395,140 +1358,39 @@ function enterBoston() {
     if (initialStateMoney) initialStateMoney.textContent = "$200";
     if (initialStatePeople) initialStatePeople.textContent = "0";
 
+    const worldTime = document.getElementById("worldTime");
+    if (worldTime) worldTime.textContent = realTime;
 
-    // -----------------------------------------
-    // INITIAL SCENE
-    // -----------------------------------------
+    const memoryTime = document.getElementById("memoryTime");
+    if (memoryTime) memoryTime.textContent = realTime;
 
-    const sceneTitle =
-        document.getElementById("sceneTitle");
+    const sceneTitle = document.getElementById("sceneTitle");
+    const sceneText = document.getElementById("sceneText");
+    const choices = document.getElementById("choices");
 
-    const sceneText =
-        document.getElementById("sceneText");
-
-    const choices =
-        document.getElementById("choices");
-
-    // -----------------------------------------
-    // MEMORY IMAGE
-    // -----------------------------------------
-    
-    if (sceneTitle) {
-
-        sceneTitle.textContent =
-            "The First Moment";
-
-    }
-
-
+    if (sceneTitle) sceneTitle.textContent = "Entering Boston";
     if (sceneText) {
-
         sceneText.innerHTML = `
-
             <div class="world-scene">
-
-                <div class="world-label">
-                    ENVIRONMENT
-                </div>
-
-                <div class="world-environment">
-
-                    Boston is already awake.
-
-                    A small community market
-                    is beginning to fill the street.
-
-                </div>
-
-
-                <div class="world-divider"></div>
-
-
-                <div class="world-label">
-                    SOMETHING CHANGED
-                </div>
-
-                <div class="world-event">
-
-                    Nothing seems particularly important
-                    yet.
-
-                    You simply have some time ahead of you.
-
-                </div>
-
-            </div>
-
-        `;
+                <div class="world-label">WORLD ENGINE</div>
+                <div class="world-environment">Finding your first place in Boston...</div>
+            </div>`;
     }
-
-
-    // -----------------------------------------
-    // INITIAL CHOICES
-    // -----------------------------------------
-
-    if (choices) {
-
-        window.currentWorldChoices = [
-
-            "Go inside the community market and look around.",
-
-            "Get a coffee first.",
-
-            "Keep walking.",
-
-            "Choose a direction without thinking."
-
-        ];
-
-
-        let html = "";
-
-
-        window.currentWorldChoices.forEach(
-            (choice, index) => {
-
-                html += `
-
-                    <button
-                        class="choice"
-                        onclick="handleChoice(${index})"
-                    >
-
-                        ${String.fromCharCode(65 + index)}.
-                        ${escapeHtml(choice)}
-
-                    </button>
-
-                `;
-
-            }
-        );
-
-
-        html += `
-
-            <input
-                class="free-input"
-                id="freeAction"
-                placeholder="Or tell the world what you want to do..."
-            >
-
-            <button
-                class="choice"
-                onclick="freeAction()"
-            >
-                → Do it
-            </button>
-
-        `;
-
-
-        choices.innerHTML = html;
-    }
-
+    if (choices) choices.innerHTML = "";
 
     showScreen("world");
+
+    // The first scene is generated by the same World Engine as every later
+    // scene. This guarantees a real scene-specific Boston background instead
+    // of the old hard-coded market placeholder.
+    sendAction(
+        "Begin the journey. Establish the first believable moment in Boston. " +
+        "The player has just entered this life and has not taken a meaningful action yet.",
+        {
+            initialScene: true,
+            generatePlayerAvatar: !!playerPhoto
+        }
+    );
 }
 
 
@@ -1536,7 +1398,7 @@ function enterBoston() {
 // AI ACTION
 // =====================================================
 
-async function sendAction(action) {
+async function sendAction(action, options = {}) {
 
     if (!action || !action.trim()) return;
 
@@ -1563,9 +1425,11 @@ async function sendAction(action) {
         player: {
             name: playerName,
             age: playerAge,
-            language: playerLanguage,
-            photo: playerPhoto
+            language: playerLanguage
         },
+        initialScene: options.initialScene === true,
+        generatePlayerAvatar: options.generatePlayerAvatar === true,
+        playerPhoto: options.generatePlayerAvatar === true ? playerPhoto : "",
         memoryRequest: true,
         worldState: {
             ...worldState,
@@ -1603,6 +1467,24 @@ async function sendAction(action) {
                     ? data.worldState.people
                     : (worldState.people || [])
             };
+        }
+
+        // Store the player's illustrated identity separately from NPCs.
+        if (data.playerAvatarData) {
+            worldAssets.player = data.playerAvatarData;
+
+            const playerCharacterImage = document.getElementById("characterImage");
+            const playerPlaceholder = document.querySelector(".world-left .world-side-placeholder");
+            const playerQuote = document.getElementById("characterQuote");
+
+            if (playerCharacterImage) {
+                playerCharacterImage.src = data.playerAvatarData;
+                playerCharacterImage.style.display = "block";
+            }
+            if (playerPlaceholder) playerPlaceholder.style.display = "none";
+            if (playerQuote) {
+                playerQuote.textContent = playerName + " — entering a life that could have been.";
+            }
         }
 
         // Store persistent image assets by entity ID.
@@ -1702,6 +1584,18 @@ function renderWorldResponse(data) {
     }
 
     // -------------------------------------------------
+    // PLAYER illustrated identity
+    // -------------------------------------------------
+    if (worldAssets.player && characterImage) {
+        characterImage.src = worldAssets.player;
+        characterImage.style.display = "block";
+        const placeholder = document.querySelector(".world-left .world-side-placeholder");
+        if (placeholder) placeholder.style.display = "none";
+        const characterQuote = document.getElementById("characterQuote");
+        if (characterQuote) characterQuote.textContent = playerName + " — entering a life that could have been.";
+    }
+
+    // -------------------------------------------------
     // Persistent NPC image
     // -------------------------------------------------
     const scenePeople = Array.isArray(data.people) ? data.people : [];
@@ -1710,7 +1604,7 @@ function renderWorldResponse(data) {
         return id && worldAssets.people[id];
     });
 
-    if (meaningfulPerson && characterImage) {
+    if (meaningfulPerson && characterImage && !data.initialScene) {
         characterImage.src = worldAssets.people[meaningfulPerson.entityId];
         characterImage.style.display = "block";
 
