@@ -1198,25 +1198,77 @@ function showScreen(id) {
 // PHOTO
 // =====================================================
 
-function previewPhoto(event) {
+function compressPlayerPhoto(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
 
-    const file = event.target.files[0];
+        reader.onload = function(event) {
+            const img = new Image();
 
-    if (!file) return;
+            img.onload = function() {
+                const MAX_SIZE = 1200;
 
-    const reader = new FileReader();
+                let width = img.width;
+                let height = img.height;
 
-    reader.onload = function(e) {
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height = Math.round(
+                            height * MAX_SIZE / width
+                        );
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width = Math.round(
+                            width * MAX_SIZE / height
+                        );
+                        height = MAX_SIZE;
+                    }
+                }
 
-        const img =
-            document.getElementById("photoPreview");
+                const canvas =
+                    document.createElement("canvas");
 
-        img.src = e.target.result;
-        playerPhoto = e.target.result;
-        img.style.display = "inline-block";
-    };
+                canvas.width = width;
+                canvas.height = height;
 
-    reader.readAsDataURL(file);
+                const ctx =
+                    canvas.getContext("2d");
+
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    width,
+                    height
+                );
+
+                // JPEG greatly reduces payload size
+                const compressed =
+                    canvas.toDataURL(
+                        "image/jpeg",
+                        0.82
+                    );
+
+                console.log(
+                    "Compressed player photo:",
+                    Math.round(
+                        compressed.length / 1024
+                    ),
+                    "KB"
+                );
+
+                resolve(compressed);
+            };
+
+            img.onerror = reject;
+            img.src = event.target.result;
+        };
+
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 
@@ -1420,6 +1472,13 @@ async function sendAction(action, options = {}) {
 
     choices.innerHTML = "";
 
+    const photoForUpload =
+    options.generatePlayerAvatar === true &&
+    playerPhoto &&
+    playerPhoto.length < 3500000
+        ? playerPhoto
+        : "";
+    
     const requestBody = {
         playerAction: action,
         player: {
@@ -1428,8 +1487,12 @@ async function sendAction(action, options = {}) {
             language: playerLanguage
         },
         initialScene: options.initialScene === true,
-        generatePlayerAvatar: options.generatePlayerAvatar === true,
-        playerPhoto: options.generatePlayerAvatar === true ? playerPhoto : "",
+        generatePlayerAvatar:
+            options.generatePlayerAvatar === true &&
+            !!photoForUpload,
+        
+        playerPhoto:
+            photoForUpload,
         memoryRequest: true,
         worldState: {
             ...worldState,
@@ -1446,7 +1509,35 @@ async function sendAction(action, options = {}) {
             body: JSON.stringify(requestBody)
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        
+        if (!response.ok) {
+            console.error(
+                "World Engine HTTP error:",
+                response.status,
+                responseText
+            );
+        
+            throw new Error(
+                `World Engine request failed (${response.status}): ${responseText}`
+            );
+        }
+        
+        let data;
+        
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error(
+                "World Engine returned non-JSON:",
+                responseText
+            );
+        
+            throw new Error(
+                "World Engine returned an invalid response: " +
+                responseText.slice(0, 300)
+            );
+        }
 
         if (!response.ok || !data.ok) {
             throw new Error(
