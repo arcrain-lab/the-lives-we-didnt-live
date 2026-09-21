@@ -1147,9 +1147,22 @@ let worldState = {
     time: "Saturday, 10:27 AM",
     location: "Boston",
     people: [],
+    locations: [],
+    relationships: [],
     events: [],
     openThreads: [],
-    money: 200
+    money: 200,
+    player: {},
+    journey: {}
+};
+
+// Persistent visual assets for the current journey.
+// Location/NPC images are identity assets and are reused.
+// Memory images are moment-specific.
+let worldAssets = {
+    locations: {},
+    people: {},
+    memories: []
 };
 
 let journeyHistory = [];
@@ -1351,11 +1364,15 @@ function enterBoston() {
         time: realTime,
         location: "Boston",
         people: [],
+        locations: [],
+        relationships: [],
         events: [],
         openThreads: [],
         money: 200,
         player: {
-            name: playerName
+            name: playerName,
+            age: playerAge,
+            language: playerLanguage
         },
         journey: {
             theme: theme,
@@ -1364,9 +1381,14 @@ function enterBoston() {
         }
     };
 
-    // Clear previous journey
+    // Clear previous journey and all persistent visual identities.
     journeyHistory = [];
     knownPeople = [];
+    worldAssets = {
+        locations: {},
+        people: {},
+        memories: []
+    };
 
     const initialStateMoney = document.getElementById("stateMoney");
     const initialStatePeople = document.getElementById("statePeople");
@@ -1518,273 +1540,133 @@ async function sendAction(action) {
 
     if (!action || !action.trim()) return;
 
-    const sceneText =
-        document.getElementById("sceneText");
-
-    const choices =
-        document.getElementById("choices");
-
-
-    // -----------------------------------------
-    // Record player's action
-    // -----------------------------------------
+    const sceneText = document.getElementById("sceneText");
+    const choices = document.getElementById("choices");
 
     journeyHistory.push({
-
         type: "player",
-
         action: action,
-
         time: worldState.time,
-
         location: worldState.location
-
     });
 
-
-    // -----------------------------------------
-    // Loading state
-    // -----------------------------------------
-
     sceneText.innerHTML = `
-
         <div class="world-scene">
-
-            <div class="world-label">
-                WORLD ENGINE
-            </div>
-
-            <div class="world-environment">
-                The world is responding...
-            </div>
-
-        </div>
-
-    `;
-
+            <div class="world-label">WORLD ENGINE</div>
+            <div class="world-environment">The world is responding...</div>
+        </div>`;
 
     choices.innerHTML = "";
 
-
-    // -----------------------------------------
-    // Send CURRENT WORLD + HISTORY to AI
-    // -----------------------------------------
-
-     const requestBody = {
-    
+    const requestBody = {
         playerAction: action,
-    
         player: {
             name: playerName,
             age: playerAge,
             language: playerLanguage,
             photo: playerPhoto
         },
-    
-         memoryRequest: true,
-         
-         worldState: {
-    
+        memoryRequest: true,
+        worldState: {
             ...worldState,
-    
-            journeyHistory:
-                journeyHistory.slice(-12)
-    
+            // Image data is deliberately NOT sent to the model.
+            // The model only needs persistent entity metadata/IDs.
+            journeyHistory: journeyHistory.slice(-12)
         }
-    
     };
 
-    // -----------------------------------------
-    // Ask World Engine
-    // -----------------------------------------
-
     try {
+        const response = await fetch(WORLD_ENGINE_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
 
-        const response = await fetch(
-
-            WORLD_ENGINE_URL,
-
-            {
-
-                method: "POST",
-
-                headers: {
-
-                    "Content-Type":
-                        "application/json"
-
-                },
-
-                body:
-                    JSON.stringify(requestBody)
-
-            }
-
-        );
-
-
-        const data =
-            await response.json();
-
-
-        // -----------------------------------------
-        // Error handling
-        // -----------------------------------------
+        const data = await response.json();
 
         if (!response.ok || !data.ok) {
-
             throw new Error(
-
                 data.error
                     ? JSON.stringify(data.error)
                     : "World Engine request failed."
-
             );
-
         }
-
-
-        // -----------------------------------------
-        // Update world state
-        // -----------------------------------------
 
         if (data.worldState) {
-
             worldState = {
-
                 ...worldState,
-
-                ...data.worldState
-
+                ...data.worldState,
+                locations: Array.isArray(data.worldState.locations)
+                    ? data.worldState.locations
+                    : (worldState.locations || []),
+                people: Array.isArray(data.worldState.people)
+                    ? data.worldState.people
+                    : (worldState.people || [])
             };
-
         }
 
+        // Store persistent image assets by entity ID.
+        if (Array.isArray(data.assetUpdates)) {
+            data.assetUpdates.forEach(asset => {
+                if (!asset || !asset.imageData || !asset.id) return;
 
-        // -----------------------------------------
-        // Record AI response
-        // -----------------------------------------
+                if (asset.type === "location" || asset.type === "environment") {
+                    worldAssets.locations[asset.id] = asset.imageData;
+                }
+
+                if (asset.type === "character") {
+                    worldAssets.people[asset.id] = asset.imageData;
+                }
+
+                if (asset.type === "memory") {
+                    worldAssets.memories.push({
+                        id: asset.id,
+                        imageData: asset.imageData,
+                        time: data.time || worldState.time,
+                        caption: data.memoryCaption || "A moment worth remembering."
+                    });
+                }
+            });
+        }
 
         journeyHistory.push({
-
             type: "world",
-
-            sceneTitle:
-                data.sceneTitle || "",
-
-            time:
-                data.time ||
-                worldState.time,
-
-            location:
-                data.location ||
-                worldState.location,
-
-            environment:
-                data.environment || "",
-
-            event:
-                data.event || "",
-
-            people:
-                Array.isArray(data.people)
-                    ? data.people
-                    : [],
-
-            dialogue:
-                data.dialogue || {
-                    speaker: "",
-                    text: ""
-                },
-
-            choices:
-                Array.isArray(data.choices)
-                    ? data.choices
-                    : [],
-
-            shouldGenerateImage:
-                data.shouldGenerateImage || false,
-
-            imageType:
-                data.imageType || "none",
-
-            memoryMoment:
-                data.memoryMoment || false
-
+            sceneTitle: data.sceneTitle || "",
+            time: data.time || worldState.time,
+            location: data.location || worldState.location,
+            locationEntityId: data.locationEntityId || "",
+            environment: data.environment || "",
+            event: data.event || "",
+            people: Array.isArray(data.people) ? data.people : [],
+            dialogue: data.dialogue || { speaker: "", text: "" },
+            choices: Array.isArray(data.choices) ? data.choices : [],
+            imageTypes: Array.isArray(data.imageTypes) ? data.imageTypes : [],
+            memoryMoment: data.memoryMoment || false
         });
-
-
-        // -----------------------------------------
-        // Render new world
-        // -----------------------------------------
 
         renderWorldResponse(data);
 
     } catch (error) {
-
         console.error(error);
 
-
         sceneText.innerHTML = `
-
             <div class="world-scene">
-
-                <div class="world-label">
-                    WORLD ENGINE
-                </div>
-
+                <div class="world-label">WORLD ENGINE</div>
                 <div class="world-event">
-
-                    <strong>
-                        The world went quiet
-                        for a moment.
-                    </strong>
-
-                    <br><br>
-
-                    Something prevented the
-                    World Engine from responding.
-
-                    <br><br>
-
-                    <small>
-                        ${escapeHtml(
-                            error.message
-                        )}
-                    </small>
-
+                    <strong>The world went quiet for a moment.</strong><br><br>
+                    Something prevented the World Engine from responding.<br><br>
+                    <small>${escapeHtml(error.message)}</small>
                 </div>
-
-            </div>
-
-        `;
-
+            </div>`;
 
         choices.innerHTML = `
-
-            <button
-                class="choice"
-                onclick="sendAction(${JSON.stringify(action)})"
-            >
-
+            <button class="choice" onclick="sendAction(${JSON.stringify(action)})">
                 Try again.
-
             </button>
-
-
-            <button
-                class="choice"
-                onclick="enterBoston()"
-            >
-
+            <button class="choice" onclick="enterBoston()">
                 Return to the beginning.
-
-            </button>
-
-        `;
-
+            </button>`;
     }
-
 }
     
 // =====================================================
@@ -1792,78 +1674,72 @@ async function sendAction(action) {
 // =====================================================
 
 function renderWorldResponse(data) {
-   
-    console.log("IMAGE DEBUG:", {
-        shouldGenerateImage: data.shouldGenerateImage,
-        imageType: data.imageType,
-        imagePrompt: data.imagePrompt
+
+    console.log("WORLD ASSET DEBUG:", {
+        location: data.location,
+        locationEntityId: data.locationEntityId,
+        locationIsNew: data.locationIsNew,
+        imageTypes: data.imageTypes,
+        assetUpdates: data.assetUpdates
     });
 
-    // -----------------------------------------
-    // CHARACTER / MEMORY IMAGE
-    // -----------------------------------------
-    
-    const characterImage =
-        document.getElementById("characterImage");
-    
-    const memoryImage =
-        document.getElementById("memoryImage");
+    const characterImage = document.getElementById("characterImage");
+    const memoryImage = document.getElementById("memoryImage");
+    const environmentImage = document.getElementById("environmentImage");
+    const memoryCaption = document.getElementById("memoryCaption");
 
-    const environmentImage =
-        document.getElementById("environmentImage");
-    
-    const memoryCaption =
-        document.getElementById("memoryCaption");
-    
-     // Character
-if (
-    data.imageData &&
-    data.imageType === "character" &&
-    characterImage
-) {
-    characterImage.src = data.imageData;
-    characterImage.style.display = "block";
+    // -------------------------------------------------
+    // Persistent LOCATION image
+    // -------------------------------------------------
+    const locationId = data.locationEntityId || "";
+    const locationImage = locationId
+        ? worldAssets.locations[locationId]
+        : null;
 
-    const characterPlaceholder =
-        document.querySelector(".world-left .world-side-placeholder");
-
-    if (characterPlaceholder) {
-        characterPlaceholder.style.display = "none";
+    if (locationImage && environmentImage) {
+        environmentImage.src = locationImage;
+        environmentImage.style.display = "block";
     }
-}
 
-    // Memory
-    if (
-        data.imageData &&
-        data.imageType === "memory" &&
-        memoryImage
-    ) {
-        memoryImage.src = data.imageData;
+    // -------------------------------------------------
+    // Persistent NPC image
+    // -------------------------------------------------
+    const scenePeople = Array.isArray(data.people) ? data.people : [];
+    const meaningfulPerson = scenePeople.find(person => {
+        const id = person?.entityId;
+        return id && worldAssets.people[id];
+    });
+
+    if (meaningfulPerson && characterImage) {
+        characterImage.src = worldAssets.people[meaningfulPerson.entityId];
+        characterImage.style.display = "block";
+
+        const placeholder = document.querySelector(".world-left .world-side-placeholder");
+        if (placeholder) placeholder.style.display = "none";
+
+        const characterQuote = document.getElementById("characterQuote");
+        if (characterQuote) {
+            characterQuote.textContent = meaningfulPerson.name || "Someone you met";
+        }
+    }
+
+    // -------------------------------------------------
+    // Persistent memory image — latest meaningful memory
+    // -------------------------------------------------
+    const latestMemory = worldAssets.memories[worldAssets.memories.length - 1];
+
+    if (latestMemory && data.memoryMoment && memoryImage) {
+        memoryImage.src = latestMemory.imageData;
         memoryImage.style.display = "block";
-    
-        const memoryPlaceholder =
-            document.querySelector(".world-right .world-side-placeholder");
-    
-        if (memoryPlaceholder) {
-            memoryPlaceholder.style.display = "none";
-        }
-    
+
+        const placeholder = document.querySelector(".world-right .world-side-placeholder");
+        if (placeholder) placeholder.style.display = "none";
+
         if (memoryCaption) {
-            memoryCaption.textContent =
-                "A moment worth remembering.";
+            memoryCaption.textContent = latestMemory.caption || "A moment worth remembering.";
         }
     }
 
-    // Environment
-        if (
-            data.imageData &&
-            data.imageType === "environment" &&
-            environmentImage
-        ) {
-            environmentImage.src = data.imageData;
-            environmentImage.style.display = "block";
-        }
-        
     // -----------------------------------------
     // Store current choices
     // -----------------------------------------
@@ -1982,7 +1858,10 @@ if (
     }
 
     if (statePeople) {
-        statePeople.textContent = String(knownPeople.length);
+        const persistentPeopleCount = Array.isArray(worldState.people)
+            ? worldState.people.length
+            : knownPeople.length;
+        statePeople.textContent = String(persistentPeopleCount);
     }
 
 
