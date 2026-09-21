@@ -1581,20 +1581,20 @@ async function sendAction(action, options = {}) {
         // Store persistent image assets by entity ID.
         if (Array.isArray(data.assetUpdates)) {
             data.assetUpdates.forEach(asset => {
-                if (!asset || !asset.imageData || !asset.id) return;
+                if (!asset || !asset.data || !asset.id) return;
 
                 if (asset.type === "location" || asset.type === "environment") {
-                    worldAssets.locations[asset.id] = asset.imageData;
+                    worldAssets.locations[asset.id] = asset.data;
                 }
 
-                if (asset.type === "character") {
-                    worldAssets.people[asset.id] = asset.imageData;
+                if (asset.type === "character" || asset.type === "npc") {
+                    worldAssets.people[asset.id] = asset.data;
                 }
 
                 if (asset.type === "memory") {
                     worldAssets.memories.push({
                         id: asset.id,
-                        imageData: asset.imageData,
+                        imageData: asset.data,
                         time: data.time || worldState.time,
                         caption: data.memoryCaption || "A moment worth remembering."
                     });
