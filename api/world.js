@@ -1,16 +1,11 @@
+// ============================================================
+// WORLD ENGINE
+// The Lives We Didn't Live
+// Persistent World + Persistent NPCs + Persistent Locations
+// + Player Avatar Transformation + Environment Images
+// ============================================================
+
 export default async function handler(req, res) {
-  // =====================================================
-  // CORS
-  // =====================================================
-
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
   if (req.method !== "POST") {
     return res.status(405).json({
       ok: false,
@@ -19,11 +14,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // =====================================================
-    // INPUT
-    // =====================================================
-
-    const { playerAction, worldState } = req.body || {};
+    const {
+      playerAction,
+      worldState = {},
+      initialScene = false,
+      generatePlayerAvatar = false,
+      playerPhoto = ""
+    } = req.body || {};
 
     if (!playerAction) {
       return res.status(400).json({
@@ -32,301 +29,367 @@ export default async function handler(req, res) {
       });
     }
 
-    // =====================================================
-    // WORLD ENGINE PROMPT
-    // =====================================================
+    // ============================================================
+    // WORLD PHILOSOPHY
+    // ============================================================
 
     const systemPrompt = `
-You are the World Engine for "The Lives We Didn't Live."
+You are the World Engine for an interactive life simulation called
+"The Lives We Didn't Live."
 
-This is an interactive narrative set in a realistic version of Boston.
+You are NOT a narrator who forces a story.
 
-You are NOT writing a predetermined story.
+You simulate a persistent world.
 
-You simulate the next believable moment after the player's action.
+The player controls only their own actions.
 
-The world should feel like a living place rather than a linear story.
-
-CORE PRINCIPLES:
-
-1. The player controls only their own actions and intentions.
-
-2. The player does NOT control other people's reactions.
-
-3. Other people have their own agency, motivations, boundaries, moods,
-   schedules, relationships, and incomplete information.
-
-4. The world follows realistic physical, social, cultural, legal,
-   financial, and temporal rules.
-
-5. Never guarantee the player's desired outcome.
-
-6. Uncertainty is part of the experience.
-
-7. The selected Journey theme affects emotional tone and atmosphere,
-   NOT the guaranteed outcome.
-
-8. Intensity affects how emotionally or situationally significant
-   moments may feel, but does not force dramatic events.
-
-9. Tempo affects story density:
-   - Slow: allow more sensory detail and small moments.
-   - Normal: balanced pacing.
-   - Fast: skip uneventful moments and move forward efficiently.
-
-10. Every meaningful player action should move the world forward.
-
-11. The journey begins at the exact date and time provided
-    in the current world state.
-
-12. Treat the current world-state time as the canonical in-world time.
-
-13. Never reset the time to an earlier time or invent a new starting time.
-
-14. Advance time realistically according to the player's action.
-    Walking, traveling, conversations, waiting, eating, working,
-    and other activities should consume plausible amounts of time.
-
-15. If an action takes only a short amount of time, advance the clock
-    only by a few minutes.
-
-16. Always return the updated in-world date and time in the "time" field.
-
-17. Preserve continuity.
-
-18. Do not reset the world.
-
-19. Remember people, locations, relationships, events,
-    unresolved threads, and consequences from the current world state.
-
-20. Do not force drama when an ordinary response is more believable.
-
-21. Natural language actions are always allowed.
-
-22. Interpret the player's action reasonably while preserving
-    what the player actually chose.
-
-23. Do not narrate thoughts, feelings, or intentions for the player
-    unless the player explicitly stated them.
-
-24. Do not make every moment special.
-    Ordinary moments are important too.
-
-25. The world should contain small unexpected details,
-    but avoid artificial twists.
-
-26. Generate the next meaningful moment, not an entire chapter.
-
---------------------------------------------------
-VISUAL / READING STYLE
---------------------------------------------------
-
-The response will be displayed as a structured interactive scene.
-
-Keep each section short and visually clear.
-
-ENVIRONMENT:
-1–2 short sentences.
-Describe only the physical surroundings, atmosphere, weather,
-sounds, movement, or sensory details that matter now.
-
-EVENT:
-1–2 short sentences.
-Describe what has changed or what is happening now.
-
-PEOPLE:
-When a person is relevant, describe them briefly.
-Their description should be visually useful:
-clothing, approximate age, expression, posture, or another
-distinctive detail.
-
-DIALOGUE:
-Use short, natural dialogue.
-Usually one or two sentences.
-
-Do NOT write long paragraphs.
-
-Do NOT repeat information already obvious from the world state.
-
-Do NOT turn every response into a dramatic scene.
-
---------------------------------------------------
-PEOPLE AND VISUAL MEMORY
---------------------------------------------------
-
-The world should distinguish between ordinary moments
-and moments worth remembering.
-
-Set shouldGenerateImage = true when:
-
-- an important person is being introduced for the first time, OR
-- a genuinely memorable visual moment occurs, OR
-- a new or visually distinctive environment is being established
-  and the setting is important to the current scene.
-- a visually distinctive person is introduced and their appearance
-  is relevant to the current scene.
-
-Do not generate images for ordinary movement,
-routine conversation, or every scene.
-
-IMAGE TYPE PRIORITY:
-
-When choosing imageType, prioritize people over environments.
-
-1. If the player is meeting, talking to, interacting with, or observing
-a meaningful person, use:
-
-imageType = "character"
-shouldGenerateImage = true
-
-This takes priority over environment.
-
-2. For the first meaningful person the player encounters,
-prefer imageType = "character" if the person is visually describable.
-
-3. If an important new person is introduced:
-imageType = "character"
-
-4. Use imageType = "memory" only when a genuinely memorable visual
-moment should be preserved.
-
-5. Use imageType = "environment" only when there is NO meaningful person
-being introduced or interacted with, and the current scene is being
-established by a new or visually distinctive place.
-
-6. Otherwise:
-
-shouldGenerateImage = false
-imageType = "none"
-
-imagePrompt should describe the PLACE itself:
-- architecture
-- interior or exterior setting
-- lighting
-- weather or atmosphere
-- important objects
-- spatial details that make the location recognizable
-
-Do NOT make the environment image primarily about a person.
-
-For imageType = "environment", the image should function as the visual establishing shot of the current scene.
-
-The environment should visually communicate:
-- where the player is
-- what kind of place this is
-- the time of day
-- the mood and atmosphere of the scene
-- details that make this place feel specific and lived-in
-
-Keep the composition suitable for a wide cinematic scene background.
-
-IMAGE PROMPT:
-
-If imageType = "none":
-    imagePrompt = ""
-
-If imageType = "character":
-    Write a concise visual description for an image-generation model.
-    Describe the person's approximate age, appearance, hair, clothing,
-    posture, expression, and relevant surroundings.
-    Focus on visually observable details.
-    Do not describe their thoughts or personality abstractly.
-
-If imageType = "memory":
-    Write a concise visual description of the memorable moment.
-    Describe the setting, people, composition, lighting, atmosphere,
-    and important visual details.
-
-The imagePrompt should be concise and visually specific.
-Do not write a story or dialogue inside imagePrompt.
-
-Do not generate images for ordinary movement,
-routine conversation, or every scene.
-
-The principle is:
-
-"The world doesn't need to be illustrated.
-People and memories do."
-
---------------------------------------------------
-WORLD STATE
---------------------------------------------------
-
-Update the world state whenever something meaningful changes.
-
-Preserve:
-
-- current time
-- current location
-- people
+NPCs have:
+- their own goals
+- motivations
+- emotions
+- routines
 - relationships
-- events
-- unresolved threads
-- important consequences
-- player information
-- journey settings
+- memories
+- incomplete information
+- personal boundaries
+- changing circumstances
 
-Do not erase existing information merely because it is not
-mentioned in the current scene.
+Locations have:
+- persistent identities
+- stable names
+- stable addresses
+- stable physical descriptions
+- consistent visual identity
 
---------------------------------------------------
-CHOICES
---------------------------------------------------
+The world follows realistic:
+- physical rules
+- social rules
+- cultural rules
+- legal rules
+- financial rules
+- geographic rules
+- temporal rules
 
-Provide 2–4 plausible choices.
+Do not manufacture drama merely to make the story interesting.
 
-Choices should represent genuinely different actions.
+Do not force:
+- romance
+- conflict
+- danger
+- friendship
+- success
+- failure
+- emotional breakthroughs
 
-Do not make one choice obviously correct.
+unless they naturally follow from the player's actions and the world state.
 
-Do not guarantee outcomes.
+Small ordinary events are valid.
 
-The player may always ignore these choices and type
-their own action in natural language.
+The world should sometimes feel uneventful.
 
---------------------------------------------------
-MEMORY
---------------------------------------------------
+NPCs should not know information they could not reasonably know.
 
-Set memoryMoment = true only when this moment could reasonably
-become a meaningful memory of the journey.
+The player should not automatically be the center of attention.
 
-Most ordinary moments should have memoryMoment = false.
+Maintain continuity with previous world state.
 
---------------------------------------------------
-OUTPUT
---------------------------------------------------
+If a location already exists in worldState, reuse that location instead of inventing a duplicate.
 
-Return ONLY the structured JSON requested by the schema.
+If an NPC already exists in worldState, reuse that NPC instead of inventing a duplicate.
+
+Names, addresses, relationships, memories and physical appearance should remain consistent.
+
+Time must progress naturally.
+
+Weather and environment should be plausible for Boston and the current date/time.
+
+The world should feel like a believable alternate life rather than a scripted video game.
 `;
 
-    // =====================================================
+    // ============================================================
+    // INITIAL SCENE INSTRUCTION
+    // ============================================================
+
+    const initialSceneInstruction = initialScene
+      ? `
+THIS IS THE VERY FIRST SCENE OF THE JOURNEY.
+
+Create the player's first believable moment in Boston.
+
+IMPORTANT:
+
+1. Choose ONE specific real-world-feeling location in Boston.
+
+Do NOT simply say:
+- Boston
+- Downtown Boston
+- a street in Boston
+
+Instead choose a specific place such as:
+- a particular public square
+- a specific neighborhood street
+- a specific park
+- a specific MBTA station
+- a specific library
+- a specific waterfront area
+- a specific café
+- a specific market
+- a specific community space
+- another plausible specific Boston location
+
+The place should make sense at the current time.
+
+2. The first scene should be visually distinctive.
+
+3. environmentImagePrompt MUST describe the actual location.
+
+Include:
+- specific location
+- architecture
+- street/interior layout
+- nearby recognizable physical features
+- time of day
+- weather
+- lighting
+- atmosphere
+- surrounding objects
+- realistic Boston details
+
+4. The environment image should primarily depict the LOCATION,
+not a close-up portrait of the player.
+
+5. The environment should feel like a real Boston place interpreted through
+the game's illustrated graphic-novel visual style.
+
+6. Do not invent a fantasy location.
+
+7. imageTypes MUST contain "environment".
+
+8. The first scene should not automatically introduce an NPC unless
+there is a natural reason for one to be present.
+
+9. Do not force an important event.
+
+The first scene can simply establish:
+- where the player is
+- what time it is
+- what the environment feels like
+- what is happening around them
+- what they can reasonably choose to do next
+`
+      : "";
+
+    // ============================================================
+    // WORLD STATE CONTEXT
+    // ============================================================
+
+    const worldStateContext = JSON.stringify(
+      worldState || {},
+      null,
+      2
+    );
+
+    // ============================================================
     // USER PROMPT
-    // =====================================================
+    // ============================================================
 
     const userPrompt = `
 PLAYER ACTION:
-
 ${playerAction}
 
-
 CURRENT WORLD STATE:
+${worldStateContext}
 
-${JSON.stringify(worldState || {}, null, 2)}
+${initialSceneInstruction}
 
+Return the next state of the world.
 
-Generate the next meaningful moment.
+Remember:
 
-Preserve continuity with the existing world.
-
-Do not restart the journey.
-
-Return a concise, visually structured moment.
+- Do not rewrite existing NPC identities.
+- Do not duplicate existing locations.
+- Do not randomly move NPCs without a reason.
+- Do not force an event.
+- Do not make everyone react to the player.
+- Keep the world grounded and continuous.
+- The player can fail.
+- The player can be ignored.
+- The player can change their mind.
+- NPC relationships should change gradually.
+- Memories should only be created when something meaningfully memorable happens.
 `;
 
-    // =====================================================
-    // OPENAI REQUEST
-    // =====================================================
+    // ============================================================
+    // JSON SCHEMA
+    // ============================================================
+
+    const schema = {
+      type: "object",
+      additionalProperties: false,
+
+      properties: {
+        sceneTitle: {
+          type: "string"
+        },
+
+        time: {
+          type: "string"
+        },
+
+        location: {
+          type: "string"
+        },
+
+        locationIsNew: {
+          type: "boolean"
+        },
+
+        locationDescription: {
+          type: "string"
+        },
+
+        locationAddress: {
+          type: "string"
+        },
+
+        environment: {
+          type: "string"
+        },
+
+        event: {
+          type: "string"
+        },
+
+        people: {
+          type: "array",
+
+          items: {
+            type: "object",
+            additionalProperties: false,
+
+            properties: {
+              name: {
+                type: "string"
+              },
+
+              isNew: {
+                type: "boolean"
+              },
+
+              description: {
+                type: "string"
+              },
+
+              dialogue: {
+                type: "string"
+              },
+
+              currentState: {
+                type: "string"
+              },
+
+              relationshipChange: {
+                type: "string"
+              },
+
+              memoryToAdd: {
+                type: "string"
+              },
+
+              characterImagePrompt: {
+                type: "string"
+              }
+            },
+
+            required: [
+              "name",
+              "isNew",
+              "description",
+              "dialogue",
+              "currentState",
+              "relationshipChange",
+              "memoryToAdd",
+              "characterImagePrompt"
+            ]
+          }
+        },
+
+        dialogue: {
+          type: "string"
+        },
+
+        choices: {
+          type: "array",
+
+          items: {
+            type: "string"
+          }
+        },
+
+        worldState: {
+          type: "object",
+          additionalProperties: true
+        },
+
+        shouldGenerateImage: {
+          type: "boolean"
+        },
+
+        imageTypes: {
+          type: "array",
+
+          items: {
+            type: "string",
+            enum: [
+              "environment",
+              "npc",
+              "memory"
+            ]
+          }
+        },
+
+        imagePrompt: {
+          type: "string"
+        },
+
+        environmentImagePrompt: {
+          type: "string"
+        },
+
+        memoryMoment: {
+          type: "string"
+        },
+
+        memoryCaption: {
+          type: "string"
+        }
+      },
+
+      required: [
+        "sceneTitle",
+        "time",
+        "location",
+        "locationIsNew",
+        "locationDescription",
+        "locationAddress",
+        "environment",
+        "event",
+        "people",
+        "dialogue",
+        "choices",
+        "worldState",
+        "shouldGenerateImage",
+        "imageTypes",
+        "imagePrompt",
+        "environmentImagePrompt",
+        "memoryMoment",
+        "memoryCaption"
+      ]
+    };
+
+    // ============================================================
+    // OPENAI RESPONSE
+    // ============================================================
 
     const response = await fetch(
       "https://api.openai.com/v1/responses",
@@ -341,560 +404,898 @@ Return a concise, visually structured moment.
         body: JSON.stringify({
           model: "gpt-5.6-luna",
 
-          reasoning: {
-            effort: "low"
-          },
-
           input: [
             {
               role: "system",
-              content: systemPrompt
+              content: [
+                {
+                  type: "input_text",
+                  text: systemPrompt
+                }
+              ]
             },
+
             {
               role: "user",
-              content: userPrompt
+              content: [
+                {
+                  type: "input_text",
+                  text: userPrompt
+                }
+              ]
             }
           ],
 
           text: {
             format: {
               type: "json_schema",
-
               name: "world_engine_response",
-
               strict: true,
-
-              schema: {
-                type: "object",
-
-                additionalProperties: false,
-
-                properties: {
-
-                  // -------------------------------------
-                  // SCENE TITLE
-                  // -------------------------------------
-
-                  sceneTitle: {
-                    type: "string"
-                  },
-
-                  // -------------------------------------
-                  // TIME
-                  // -------------------------------------
-
-                  time: {
-                    type: "string"
-                  },
-
-                  // -------------------------------------
-                  // LOCATION
-                  // -------------------------------------
-
-                  location: {
-                    type: "string"
-                  },
-
-                  // -------------------------------------
-                  // ENVIRONMENT
-                  // -------------------------------------
-
-                  environment: {
-                    type: "string"
-                  },
-
-                  // -------------------------------------
-                  // EVENT
-                  // -------------------------------------
-
-                  event: {
-                    type: "string"
-                  },
-
-                  // -------------------------------------
-                  // PEOPLE
-                  // -------------------------------------
-
-                  people: {
-                    type: "array",
-
-                    items: {
-                      type: "object",
-
-                      additionalProperties: false,
-
-                      properties: {
-
-                        name: {
-                          type: "string"
-                        },
-
-                        description: {
-                          type: "string"
-                        },
-
-                        dialogue: {
-                          type: "string"
-                        }
-
-                      },
-
-                      required: [
-                        "name",
-                        "description",
-                        "dialogue"
-                      ]
-                    }
-                  },
-
-                  // -------------------------------------
-                  // GENERAL DIALOGUE FALLBACK
-                  // -------------------------------------
-
-                  dialogue: {
-                    type: "object",
-
-                    additionalProperties: false,
-
-                    properties: {
-
-                      speaker: {
-                        type: "string"
-                      },
-
-                      text: {
-                        type: "string"
-                      }
-
-                    },
-
-                    required: [
-                      "speaker",
-                      "text"
-                    ]
-                  },
-
-                  // -------------------------------------
-                  // PLAYER CHOICES
-                  // -------------------------------------
-
-                  choices: {
-                    type: "array",
-
-                    items: {
-                      type: "string"
-                    }
-                  },
-
-                  // -------------------------------------
-                  // WORLD STATE
-                  // -------------------------------------
-
-                  worldState: {
-                    type: "string"
-                  },
-
-                  // -------------------------------------
-                  // IMAGE SIGNAL
-                  // -------------------------------------
-                    shouldGenerateImage: {
-                      type: "boolean"
-                    },
-                    
-                    imageTypes: {
-                      type: "array",
-                      items: {
-                        type: "string",
-                        enum: ["character", "memory", "environment"]
-                      }
-                    },
-                    
-                    imagePrompt: {
-                      type: "string"
-                    },
-                    
-                    characterImagePrompt: {
-                      type: "string"
-                    },
-                    
-                    environmentImagePrompt: {
-                      type: "string"
-                    },
-                  // -------------------------------------
-                  // MEMORY
-                  // -------------------------------------
-
-                  memoryMoment: {
-                    type: "boolean"
-                  }
-
-                },
-
-                required: [
-                  "sceneTitle",
-                  "time",
-                  "location",
-                  "environment",
-                  "event",
-                  "people",
-                  "dialogue",
-                  "choices",
-                  "worldState",
-                  "shouldGenerateImage",
-                  "imageType",
-                  "imagePrompt",
-                  "characterImagePrompt",
-                  "environmentImagePrompt",
-                  "memoryMoment"
-                ]
-              }
+              schema
             }
-          },
-
-          max_output_tokens: 1200
+          }
         })
       }
     );
 
-    // =====================================================
-    // RESPONSE
-    // =====================================================
-
-    const data = await response.json();
-
-    // -----------------------------------------------------
-    // OPENAI ERROR
-    // -----------------------------------------------------
-
     if (!response.ok) {
+      const errorText = await response.text();
 
-      console.error("OpenAI error:", data);
+      console.error(
+        "OpenAI World Engine error:",
+        errorText
+      );
 
       return res.status(response.status).json({
         ok: false,
-        error: data
+        error: errorText
       });
     }
 
-    // =====================================================
-    // GET MODEL OUTPUT
-    // =====================================================
+    const data = await response.json();
 
-    let text = data.output_text || "";
+    // ============================================================
+    // EXTRACT MODEL OUTPUT
+    // ============================================================
 
-    // Fallback extraction
-    if (!text && Array.isArray(data.output)) {
+    let rawOutput = "";
 
+    if (data.output_text) {
+      rawOutput = data.output_text;
+    } else if (Array.isArray(data.output)) {
       for (const item of data.output) {
-
-        if (!Array.isArray(item.content)) {
-          continue;
-        }
-
-        for (const content of item.content) {
-
-          if (
-            content.type === "output_text" &&
-            content.text
-          ) {
-
-            text += content.text;
-
+        if (
+          item.type === "message" &&
+          Array.isArray(item.content)
+        ) {
+          for (const content of item.content) {
+            if (
+              content.type === "output_text" &&
+              content.text
+            ) {
+              rawOutput += content.text;
+            }
           }
         }
       }
     }
 
-    // =====================================================
-    // NO OUTPUT
-    // =====================================================
-
-    if (!text) {
-
-      console.error("No model output:", data);
-
-      return res.status(500).json({
-        ok: false,
-        error: "The World Engine returned no text."
-      });
+    if (!rawOutput) {
+      throw new Error(
+        "World Engine returned no structured output."
+      );
     }
-
-    // =====================================================
-    // PARSE JSON
-    // =====================================================
 
     let result;
 
     try {
-
-      result = JSON.parse(text);
-
+      result = JSON.parse(rawOutput);
     } catch (error) {
+      console.error(
+        "Failed to parse World Engine JSON:",
+        rawOutput
+      );
 
-      console.error("Invalid JSON:", text);
+      throw new Error(
+        "World Engine returned invalid JSON."
+      );
+    }
 
-      return res.status(500).json({
-        ok: false,
-        error: "AI returned invalid JSON",
-        raw: text
+    // ============================================================
+    // NORMALIZE WORLD STATE
+    // ============================================================
+
+    if (!result.worldState) {
+      result.worldState = {};
+    }
+
+    if (!Array.isArray(result.worldState.locations)) {
+      result.worldState.locations = [];
+    }
+
+    if (!Array.isArray(result.worldState.people)) {
+      result.worldState.people = [];
+    }
+
+    if (!Array.isArray(result.worldState.memories)) {
+      result.worldState.memories = [];
+    }
+
+    // ============================================================
+    // LOCATION RECONCILIATION
+    // ============================================================
+
+    let currentLocation = null;
+
+    if (result.location) {
+      const normalizedName =
+        String(result.location)
+          .trim()
+          .toLowerCase();
+
+      const normalizedAddress =
+        String(result.locationAddress || "")
+          .trim()
+          .toLowerCase();
+
+      currentLocation =
+        result.worldState.locations.find((loc) => {
+
+          const locName =
+            String(loc.name || "")
+              .trim()
+              .toLowerCase();
+
+          const locAddress =
+            String(loc.address || "")
+              .trim()
+              .toLowerCase();
+
+          if (
+            normalizedAddress &&
+            locAddress &&
+            normalizedAddress === locAddress
+          ) {
+            return true;
+          }
+
+          return (
+            normalizedName &&
+            locName === normalizedName
+          );
+        });
+
+      // ----------------------------------------------------------
+      // CREATE LOCATION
+      // ----------------------------------------------------------
+
+      if (!currentLocation) {
+        const slug =
+          normalizedName
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .slice(0, 80);
+
+        currentLocation = {
+          entityId: `loc_${slug || "unknown"}`,
+
+          name: result.location,
+
+          address:
+            result.locationAddress || "",
+
+          description:
+            result.locationDescription || "",
+
+          visualIdentity:
+            result.locationDescription || "",
+
+          firstSeen:
+            result.time || "",
+
+          lastSeen:
+            result.time || ""
+        };
+
+        result.worldState.locations.push(
+          currentLocation
+        );
+
+        result.locationIsNew = true;
+      }
+
+      // ----------------------------------------------------------
+      // UPDATE EXISTING LOCATION
+      // ----------------------------------------------------------
+
+      else {
+        currentLocation.lastSeen =
+          result.time ||
+          currentLocation.lastSeen ||
+          "";
+
+        if (
+          result.locationDescription &&
+          !currentLocation.description
+        ) {
+          currentLocation.description =
+            result.locationDescription;
+        }
+
+        if (
+          result.locationAddress &&
+          !currentLocation.address
+        ) {
+          currentLocation.address =
+            result.locationAddress;
+        }
+
+        result.locationIsNew = false;
+      }
+
+      result.locationEntityId =
+        currentLocation.entityId;
+    }
+
+    // ============================================================
+    // NPC RECONCILIATION
+    // ============================================================
+
+    const normalizedPeople =
+      Array.isArray(result.people)
+        ? result.people
+        : [];
+
+    for (const person of normalizedPeople) {
+      if (!person || !person.name) {
+        continue;
+      }
+
+      const normalizedPersonName =
+        String(person.name)
+          .trim()
+          .toLowerCase();
+
+      let existingPerson =
+        result.worldState.people.find(
+          (npc) =>
+            String(npc.name || "")
+              .trim()
+              .toLowerCase() ===
+            normalizedPersonName
+        );
+
+      // ----------------------------------------------------------
+      // CREATE NPC
+      // ----------------------------------------------------------
+
+      if (!existingPerson) {
+        const slug =
+          normalizedPersonName
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .slice(0, 80);
+
+        existingPerson = {
+          entityId:
+            `npc_${slug || "unknown"}`,
+
+          name: person.name,
+
+          description:
+            person.description || "",
+
+          visualIdentity:
+            person.characterImagePrompt || "",
+
+          currentState:
+            person.currentState || "",
+
+          relationship:
+            person.relationshipChange || "",
+
+          memories: [],
+
+          firstSeen:
+            result.time || "",
+
+          lastSeen:
+            result.time || ""
+        };
+
+        result.worldState.people.push(
+          existingPerson
+        );
+
+        person.isNew = true;
+      }
+
+      // ----------------------------------------------------------
+      // UPDATE NPC
+      // ----------------------------------------------------------
+
+      else {
+        existingPerson.lastSeen =
+          result.time ||
+          existingPerson.lastSeen ||
+          "";
+
+        if (
+          person.currentState
+        ) {
+          existingPerson.currentState =
+            person.currentState;
+        }
+
+        if (
+          person.description &&
+          !existingPerson.description
+        ) {
+          existingPerson.description =
+            person.description;
+        }
+
+        person.isNew = false;
+      }
+
+      person.entityId =
+        existingPerson.entityId;
+
+      // ----------------------------------------------------------
+      // MEMORY
+      // ----------------------------------------------------------
+
+      if (
+        person.memoryToAdd &&
+        person.memoryToAdd.trim()
+      ) {
+        if (
+          !Array.isArray(existingPerson.memories)
+        ) {
+          existingPerson.memories = [];
+        }
+
+        existingPerson.memories.push({
+          text: person.memoryToAdd,
+          time: result.time || ""
+        });
+      }
+    }
+
+    // ============================================================
+    // IMAGE TYPES
+    // ============================================================
+
+    const imageTypes =
+      Array.isArray(result.imageTypes)
+        ? result.imageTypes
+        : [];
+
+    // Initial scene MUST create environment image
+    if (
+      initialScene &&
+      !imageTypes.includes("environment")
+    ) {
+      imageTypes.push("environment");
+    }
+
+    result.imageTypes = imageTypes;
+
+    // ============================================================
+    // FALLBACK ENVIRONMENT PROMPT
+    // ============================================================
+
+    if (
+      initialScene &&
+      !result.environmentImagePrompt
+    ) {
+      result.environmentImagePrompt = [
+        result.location || "Boston",
+
+        result.locationAddress || "",
+
+        result.locationDescription || "",
+
+        result.environment || "",
+
+        "Realistic Boston establishing shot.",
+
+        "Specific real-world location.",
+
+        "Illustrated graphic-novel visual style."
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    // ============================================================
+    // IMAGE JOBS
+    // ============================================================
+
+    const imageJobs = [];
+
+    // ============================================================
+    // ENVIRONMENT IMAGE
+    // ============================================================
+
+    if (
+      imageTypes.includes("environment") &&
+      result.location
+    ) {
+      imageJobs.push({
+        type: "environment",
+
+        id:
+          result.locationEntityId ||
+          `loc_${Date.now()}`,
+
+        prompt: `
+Create a persistent environment illustration for an
+interactive life simulation.
+
+LOCATION:
+${result.location}
+
+ADDRESS:
+${result.locationAddress || ""}
+
+LOCATION DESCRIPTION:
+${result.locationDescription || ""}
+
+ENVIRONMENT:
+${result.environment || ""}
+
+SPECIFIC ENVIRONMENT DESCRIPTION:
+${result.environmentImagePrompt || ""}
+
+VISUAL STYLE:
+
+- hand-drawn graphic novel illustration
+- clean expressive linework
+- painterly shading
+- soft cinematic lighting
+- realistic but slightly stylized proportions
+- atmospheric storytelling
+- natural colors
+- believable architecture
+- believable Boston streets and surroundings
+- detailed environmental objects
+- realistic spatial composition
+
+The image should establish the LOCATION as a persistent place.
+
+It should NOT primarily be a portrait.
+
+It should feel like a real place that could be revisited later.
+
+No:
+- text
+- captions
+- speech bubbles
+- logos
+- watermarks
+- fantasy architecture
+- photorealistic skin texture
+- 3D-rendered appearance
+`,
+
+        size: "1536x1024"
       });
     }
 
-    // =====================================================
-    // CONVERT WORLD STATE BACK INTO OBJECT
-    // =====================================================
+    // ============================================================
+    // NPC IMAGES
+    // ============================================================
 
-    if (typeof result.worldState === "string") {
+    for (const person of normalizedPeople) {
+      if (
+        person.isNew &&
+        person.entityId
+      ) {
+        imageJobs.push({
+          type: "npc",
 
-      try {
+          id: person.entityId,
 
-        result.worldState =
-          JSON.parse(result.worldState);
+          prompt: `
+Create a persistent character identity illustration.
 
-      } catch (error) {
+CHARACTER:
+${person.name}
 
-        console.error(
-          "worldState parsing failed:",
-          result.worldState
-        );
+DESCRIPTION:
+${person.description || ""}
 
-        result.worldState = {};
+CURRENT STATE:
+${person.currentState || ""}
+
+CHARACTER VISUAL PROMPT:
+${person.characterImagePrompt || ""}
+
+STYLE:
+
+- hand-drawn graphic novel
+- clean expressive linework
+- painterly shading
+- soft cinematic lighting
+- realistic but slightly stylized human proportions
+- warm atmospheric storytelling
+- consistent facial structure
+- natural clothing
+- believable everyday human appearance
+
+This image establishes the character's persistent visual identity.
+
+Do not make the character look like a celebrity.
+
+Do not make them glamorous unless their description requires it.
+
+No:
+- text
+- captions
+- speech bubbles
+- logos
+- watermark
+- photorealistic skin texture
+- 3D-rendered appearance
+`,
+
+          size: "1024x1536"
+        });
       }
     }
 
-    // =====================================================
-    // SAFETY DEFAULTS
-    // =====================================================
+    // ============================================================
+    // MEMORY IMAGE
+    // ============================================================
 
-    if (!Array.isArray(result.people)) {
-      result.people = [];
+    if (
+      result.memoryMoment &&
+      result.memoryMoment.trim()
+    ) {
+      imageJobs.push({
+        type: "memory",
+
+        id:
+          `memory_${Date.now()}`,
+
+        prompt: `
+Create a memory illustration for the player's life.
+
+MEMORY:
+${result.memoryMoment}
+
+CAPTION:
+${result.memoryCaption || ""}
+
+This is NOT a portrait.
+
+It should visually capture the specific moment.
+
+STYLE:
+
+- hand-drawn graphic novel
+- expressive composition
+- painterly shading
+- soft cinematic lighting
+- realistic but slightly stylized proportions
+- emotional but understated
+- atmospheric
+- grounded in everyday life
+
+No:
+- text
+- captions
+- speech bubbles
+- logos
+- watermarks
+`,
+
+        size: "1536x1024"
+      });
     }
 
-    if (!Array.isArray(result.choices)) {
-      result.choices = [];
-    }
+    // ============================================================
+    // PLAYER AVATAR
+    // ============================================================
 
-    if (!result.dialogue) {
-      result.dialogue = {
-        speaker: "",
-        text: ""
+    let playerAvatarJob = null;
+
+    if (
+      initialScene &&
+      generatePlayerAvatar &&
+      playerPhoto
+    ) {
+      playerAvatarJob = {
+        type: "player",
+
+        id: "player_avatar",
+
+        inputImage: playerPhoto,
+
+        prompt: `
+Transform the supplied reference photograph into a
+persistent illustrated character identity for an
+interactive graphic-novel life simulation.
+
+IMPORTANT:
+
+The supplied photograph is a REFERENCE for the player's identity.
+
+Preserve:
+- recognizable facial identity
+- face shape
+- major facial features
+- hairstyle
+- hair color
+- approximate age
+- overall appearance
+- natural proportions
+
+Do NOT:
+- beautify the person
+- make them younger
+- make them older
+- change their identity
+- dramatically change facial structure
+- turn them into a celebrity
+- sexualize the appearance
+
+Convert the photographic reference into:
+
+- hand-drawn graphic-novel character
+- clean expressive linework
+- painterly shading
+- soft cinematic lighting
+- realistic but slightly stylized proportions
+- warm atmospheric storytelling
+- natural human appearance
+
+The result should look like a character from the SAME visual world
+as the Boston environment illustrations.
+
+This image will appear in the LEFT CHARACTER panel.
+
+Create a vertically oriented character portrait.
+
+No:
+- photorealistic skin texture
+- 3D-rendered appearance
+- text
+- captions
+- speech bubbles
+- logos
+- watermarks
+`,
+
+        size: "1024x1536"
       };
     }
 
-    if (!Array.isArray(result.imageTypes)) {
-      result.imageTypes = [];
-    }
-    
-    result.imageTypes = result.imageTypes.filter(type =>
-      ["character", "memory", "environment"].includes(type)
-    );
-    
-    if (result.imageTypes.length === 0) {
-      result.shouldGenerateImage = false;
-      result.imagePrompt = "";
-      result.characterImagePrompt = "";
-      result.environmentImagePrompt = "";
-    } else {
-      result.shouldGenerateImage = true;
-    }
-    // =====================================================
-    // IMAGE GENERATION
-    // =====================================================
+    // ============================================================
+    // GENERATE IMAGES
+    // ============================================================
 
-    let imageData = null;
-    let characterImageData = null;
-    let environmentImageData = null;
-    
-    if (
-      result.shouldGenerateImage === true &&
-      Array.isArray(result.imageTypes) &&
-      result.imageTypes.length > 0
+    const jobsToGenerate = [
+      ...imageJobs
+    ];
+
+    if (playerAvatarJob) {
+      jobsToGenerate.push(
+        playerAvatarJob
+      );
+    }
+
+    const generatedImages = [];
+
+    for (
+      const job of jobsToGenerate
     ) {
-    
-      const imageJobs = [];
-    
-      if (
-        result.imageTypes.includes("character") &&
-        result.characterImagePrompt
-      ) {
-        imageJobs.push({
-          type: "character",
-          prompt: result.characterImagePrompt
+      try {
+        const content = [];
+
+        // --------------------------------------------------------
+        // INPUT IMAGE
+        // --------------------------------------------------------
+
+        if (job.inputImage) {
+          content.push({
+            type: "input_image",
+
+            image_url:
+              job.inputImage,
+
+            detail: "high"
+          });
+        }
+
+        // --------------------------------------------------------
+        // IMAGE PROMPT
+        // --------------------------------------------------------
+
+        content.push({
+          type: "input_text",
+
+          text: job.prompt
         });
-      }
-    
-      if (
-        result.imageTypes.includes("environment") &&
-        result.environmentImagePrompt
-      ) {
-        imageJobs.push({
-          type: "environment",
-          prompt: result.environmentImagePrompt
-        });
-      }
-    
-      if (
-        result.imageTypes.includes("memory") &&
-        result.imagePrompt
-      ) {
-        imageJobs.push({
-          type: "memory",
-          prompt: result.imagePrompt
-        });
-      }
-    
-      const generateImage = async (job) => {
-    
-        console.log(`Generating ${job.type} image...`);
-    
-        try {
-    
-          const imageResponse = await fetch(
+
+        // --------------------------------------------------------
+        // IMAGE GENERATION
+        // --------------------------------------------------------
+
+        const imageResponse =
+          await fetch(
             "https://api.openai.com/v1/responses",
             {
               method: "POST",
-    
+
               headers: {
-                "Content-Type": "application/json",
+                "Content-Type":
+                  "application/json",
+
                 "Authorization":
                   `Bearer ${process.env.OPENAI_API_KEY}`
               },
-    
+
               body: JSON.stringify({
                 model: "gpt-5.6-luna",
-    
+
                 input: [
                   {
                     role: "user",
-                    content: [
-                      {
-                        type: "input_text",
-                        text:
-                          `Generate this image as a cinematic graphic-novel / illustrated comic panel.
-    
-    Style:
-    - hand-drawn comic illustration
-    - clean expressive linework
-    - painterly shading
-    - soft cinematic lighting
-    - realistic but slightly stylized human proportions
-    - warm atmospheric storytelling
-    - detailed facial expressions
-    - consistent visual identity across the story
-    
-    Important:
-    - Do NOT make it look like a photograph.
-    - Do NOT use photorealistic skin texture.
-    - Do NOT create 3D-rendered characters.
-    - Do NOT include text, captions, speech bubbles, logos, or watermarks.
-    - The image should feel like a frame from the same illustrated graphic novel.
-    
-    Scene description:
-    
-    ${job.prompt}`
-                      }
-                    ]
+
+                    content
                   }
                 ],
-    
+
                 tools: [
                   {
-                    type: "image_generation",
-                    model: "gpt-image-2",
-                    size: "1024x1024",
-                    quality: "medium"
+                    type:
+                      "image_generation",
+
+                    model:
+                      "gpt-image-2",
+
+                    action:
+                      job.inputImage
+                        ? "auto"
+                        : "generate",
+
+                    size:
+                      job.size ||
+                      "1024x1024",
+
+                    quality:
+                      "medium"
                   }
                 ]
               })
             }
           );
-    
-          const imageResult =
-            await imageResponse.json();
-    
-          if (!imageResponse.ok) {
-    
-            console.error(
-              `${job.type} image generation failed:`,
-              imageResult
-            );
-    
-            return null;
-          }
-    
-          const imageCall =
-            imageResult.output?.find(
-              item =>
-                item.type ===
-                "image_generation_call"
-            );
-    
-          if (imageCall?.result) {
-    
-            console.log(
-              `${job.type} image generated successfully.`
-            );
-    
-            return `data:image/png;base64,${imageCall.result}`;
-    
-          }
-    
+
+        if (!imageResponse.ok) {
+          const imageError =
+            await imageResponse.text();
+
           console.error(
-            `No ${job.type} image result returned:`,
-            imageResult
+            "Image generation failed:",
+            imageError
           );
-    
-          return null;
-    
-        } catch (error) {
-    
-          console.error(
-            `${job.type} image generation error:`,
-            error
-          );
-    
-          return null;
+
+          continue;
         }
-      };
-    
-      const generatedImages =
-        await Promise.all(
-          imageJobs.map(job => generateImage(job))
+
+        const imageData =
+          await imageResponse.json();
+
+        // --------------------------------------------------------
+        // EXTRACT GENERATED IMAGE
+        // --------------------------------------------------------
+
+        let imageBase64 = null;
+
+        if (
+          Array.isArray(
+            imageData.output
+          )
+        ) {
+          for (
+            const outputItem
+            of imageData.output
+          ) {
+            if (
+              outputItem.type ===
+              "image_generation_call"
+            ) {
+              if (
+                outputItem.result
+              ) {
+                imageBase64 =
+                  outputItem.result;
+              }
+            }
+          }
+        }
+
+        if (!imageBase64) {
+          console.warn(
+            "No generated image found for:",
+            job.type,
+            job.id
+          );
+
+          continue;
+        }
+
+        generatedImages.push({
+          type: job.type,
+
+          id: job.id,
+
+          data:
+            `data:image/png;base64,${imageBase64}`
+        });
+
+      } catch (imageError) {
+        console.error(
+          "Image generation exception:",
+          imageError
         );
-    
-      imageJobs.forEach((job, index) => {
-    
-        const generated =
-          generatedImages[index];
-    
-        if (!generated) return;
-    
-        if (job.type === "character") {
-          characterImageData = generated;
-        }
-    
-        if (job.type === "environment") {
-          environmentImageData = generated;
-        }
-    
-        if (job.type === "memory") {
-          imageData = generated;
-        }
+      }
+    }
+
+    // ============================================================
+    // SPLIT IMAGE RESULTS
+    // ============================================================
+
+    const assetUpdates = [];
+
+    let playerAvatarData = null;
+
+    for (
+      const generated
+      of generatedImages
+    ) {
+      if (
+        generated.type === "player"
+      ) {
+        playerAvatarData =
+          generated.data;
+
+        continue;
+      }
+
+      assetUpdates.push({
+        type:
+          generated.type,
+
+        id:
+          generated.id,
+
+        data:
+          generated.data
       });
     }
 
-    // =====================================================
+    // ============================================================
     // RETURN
-    // =====================================================
-    
+    // ============================================================
+
     return res.status(200).json({
       ok: true,
+
       ...result,
-      imageData,
-      characterImageData,
-      environmentImageData,
-      responseId: data.id
+
+      assetUpdates,
+
+      playerAvatarData,
+
+      initialScene,
+
+      responseId:
+        data.id
     });
+
   } catch (error) {
 
     console.error(
@@ -904,6 +1305,7 @@ Return a concise, visually structured moment.
 
     return res.status(500).json({
       ok: false,
+
       error:
         error.message ||
         "Unknown server error"
